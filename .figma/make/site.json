@@ -1,0 +1,10 @@
+{
+  "description": "Explore designer Safwan Piliang’s portfolio of digital products, brand identities, 3D work, and articles, with project details and contact links.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
