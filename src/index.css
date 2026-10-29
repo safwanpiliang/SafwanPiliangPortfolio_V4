@@ -16,6 +16,16 @@
 
   --animate-marquee-ltr: marquee-ltr 38s linear infinite;
   --animate-marquee-rtl: marquee-rtl 38s linear infinite;
+  --animate-load-bar: load-bar 1.8s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+
+  @keyframes load-bar {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
 
   @keyframes marquee-ltr {
     from {
@@ -64,6 +74,13 @@
 }
 
 @layer utilities {
+  /* Figma-style dotted canvas */
+  .canvas-grid {
+    background-color: var(--color-paper);
+    background-image: radial-gradient(rgb(17 17 17 / 0.12) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
   /* Underline that slides in from the left on hover */
   .link-slide {
     background-image: linear-gradient(currentColor, currentColor);
