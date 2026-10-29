@@ -4,13 +4,12 @@ import { heroCards, profile } from '../../data/content'
 import { Button } from '../ui/Button'
 import { Container } from '../ui/Layout'
 
-const assetPathPrefix = '/assets'
-const imgDesign11 = `${assetPathPrefix}/7f326.svg`
-const imgHeroCharacterLeft = `${assetPathPrefix}/hero-character-left.png`
+const imgSkybaseCat = '/images/hero/skybase-cat.svg'
+const imgHeroCharacterLeft = '/images/hero/character-left.png'
 
 const ease = [0.22, 1, 0.36, 1] as const
 
-// Fan layout for the stack of work cards; index 0 is the centre card.
+// Fan layout for the stack of work cards; index 3 is the centre card.
 const fan = [
   { x: -390, y: 46, r: -14 },
   { x: -260, y: 18, r: -9 },
@@ -64,7 +63,11 @@ function CardFan() {
               key={src}
               custom={i}
               variants={cardVariants}
-              whileHover={{ y: fan[i].y - 28, scale: 1.04, transition: { duration: 0.4, ease } }}
+              whileHover={{
+                y: fan[i].y - 28,
+                scale: 1.04,
+                transition: { duration: 0.4, ease },
+              }}
               style={{ zIndex: 10 - Math.abs(i - 3) }}
               className={`absolute top-6 -left-[105px] h-[270px] w-[210px] overflow-hidden rounded-[22px] bg-soft shadow-[0_30px_60px_-28px_rgba(17,17,17,0.45)] ring-1 ring-black/5 ${
                 i === 0 || i === 6 ? 'hidden md:block' : ''
@@ -75,7 +78,9 @@ function CardFan() {
           ))}
           <Bubble className="-top-2 -left-[300px] bg-accent text-white">@ui-ux</Bubble>
           <Bubble className="top-0 left-[200px] bg-ink text-paper">@brand</Bubble>
-          <Bubble className="top-[270px] left-[300px] border border-line bg-white text-ink">@3d</Bubble>
+          <Bubble className="top-[270px] left-[300px] border border-line bg-white text-ink">
+            @3d
+          </Bubble>
         </motion.div>
       </div>
     </div>
@@ -100,17 +105,15 @@ export function Hero() {
         />
       </motion.div>
 
-      {/* Right SkyBase Cat Illustration (Figma node 12:47) peeking from the right edge */}
+      {/* Right SkyBase Cat Illustration peeking from the right edge */}
       <motion.div
         aria-hidden
-        data-node-id="12:47"
-        data-name="Design 11"
         initial={{ opacity: 0, x: 60, y: 12, rotate: 4 }}
         animate={{ opacity: 1, x: 0, y: 0, rotate: 11 }}
         transition={{ duration: 1, delay: 0.3, ease }}
         className="pointer-events-none absolute top-[210px] -right-[16px] z-20 hidden h-[244px] w-[295.621px] origin-center scale-[0.65] select-none sm:block md:top-[235px] md:-right-[14px] md:scale-[0.84] xl:top-[260px] xl:-right-[10px] xl:scale-100"
       >
-        <img alt="" className="absolute inset-0 block max-w-none" src={imgDesign11} />
+        <img alt="" className="absolute inset-0 block max-w-none" src={imgSkybaseCat} />
       </motion.div>
 
       <Container className="flex flex-col items-center text-center">
@@ -148,7 +151,9 @@ export function Hero() {
           transition={{ duration: 0.8, delay: 0.6, ease }}
           className="flex flex-col items-center"
         >
-          <p className="text-[18px] font-medium tracking-[-0.02em] md:text-[20px]">{profile.name}</p>
+          <p className="text-[18px] font-medium tracking-[-0.02em] md:text-[20px]">
+            {profile.name}
+          </p>
           <p className="mt-2 max-w-[440px] text-base leading-relaxed text-mute md:text-lg">
             I design interfaces, brands, and visuals that feel simple, sharp, and human.
           </p>

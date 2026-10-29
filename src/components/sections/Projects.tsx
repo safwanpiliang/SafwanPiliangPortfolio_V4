@@ -7,9 +7,18 @@ import { Container, Reveal, SectionHeader } from '../ui/Layout'
 
 type Filter = 'All' | Category
 
+const PAGE_SIZE = 6
+
 export function Projects() {
   const [filter, setFilter] = useState<Filter>('All')
-  const visible = filter === 'All' ? projects : projects.filter((p) => p.category === filter)
+  const [limit, setLimit] = useState(PAGE_SIZE)
+  const matching = filter === 'All' ? projects : projects.filter((p) => p.category === filter)
+  const visible = matching.slice(0, limit)
+  const remaining = matching.length - visible.length
+  const selectFilter = (f: Filter) => {
+    setFilter(f)
+    setLimit(PAGE_SIZE)
+  }
   const filters: Filter[] = ['All', ...categories]
   const countFor = (f: Filter) =>
     f === 'All' ? projects.length : projects.filter((p) => p.category === f).length
@@ -27,13 +36,19 @@ export function Projects() {
               className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5 md:mx-0 md:flex-wrap md:px-0"
             >
               {filters.map((f) => (
-                <Chip key={f} active={filter === f} count={countFor(f)} onClick={() => setFilter(f)}>
+                <Chip
+                  key={f}
+                  active={filter === f}
+                  count={countFor(f)}
+                  onClick={() => selectFilter(f)}
+                >
                   {f}
                 </Chip>
               ))}
             </div>
             <p className="hidden shrink-0 font-mono text-[12px] text-mute xl:block">
-              Showing {String(visible.length).padStart(2, '0')} / {String(projects.length).padStart(2, '0')}
+              Showing {String(visible.length).padStart(2, '0')} /{' '}
+              {String(matching.length).padStart(2, '0')}
             </p>
           </div>
         </Reveal>
@@ -49,7 +64,11 @@ export function Projects() {
                 layout
                 initial={{ opacity: 0, y: 24, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.25 } }}
+                exit={{
+                  opacity: 0,
+                  scale: 0.96,
+                  transition: { duration: 0.25 },
+                }}
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               >
                 <Reveal>
@@ -59,6 +78,21 @@ export function Projects() {
             ))}
           </AnimatePresence>
         </motion.div>
+
+        {remaining > 0 && (
+          <div className="mt-12 flex justify-center md:mt-16">
+            <button
+              type="button"
+              onClick={() => setLimit((l) => l + PAGE_SIZE)}
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-line bg-transparent px-6 text-[15px] font-medium text-ink transition-[background-color,border-color,transform] duration-300 ease-out-soft hover:border-ink hover:bg-ink/[0.03] active:scale-[0.97]"
+            >
+              Load more
+              <span className="font-mono text-[12px] text-mute">
+                +{Math.min(remaining, PAGE_SIZE)}
+              </span>
+            </button>
+          </div>
+        )}
       </Container>
     </section>
   )

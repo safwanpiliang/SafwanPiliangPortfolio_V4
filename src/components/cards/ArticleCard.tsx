@@ -2,13 +2,12 @@ import { ArrowUpRight } from 'lucide-react'
 
 type Props = {
   title: string
-  date: string
   readTime: string
   thumbnail: string
   href: string
 }
 
-export function ArticleCard({ title, date, readTime, thumbnail, href }: Props) {
+export function ArticleCard({ title, readTime, thumbnail, href }: Props) {
   return (
     <a
       href={href}
@@ -26,7 +25,7 @@ export function ArticleCard({ title, date, readTime, thumbnail, href }: Props) {
       </div>
       <div className="flex flex-1 flex-col px-2 pt-5 pb-3">
         <p className="font-mono text-[12px] text-mute">
-          {date} <span className="px-1">·</span> {readTime}
+          Medium <span className="px-1">·</span> {readTime}
         </p>
         <h3 className="mt-3 line-clamp-2 text-[20px] leading-[1.25] font-medium tracking-[-0.02em] md:text-[22px]">
           {title}

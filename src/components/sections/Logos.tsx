@@ -1,25 +1,24 @@
 import type { ReactNode } from 'react'
 import { Container, Label, Reveal } from '../ui/Layout'
 
-const assetPathPrefix = '/assets'
-const imgLogoBemSv = `${assetPathPrefix}/a3068.png`
-const imgLogoUgm = `${assetPathPrefix}/008ed.svg`
-const imgGroup = `${assetPathPrefix}/cb0b8.svg`
-const imgGroup1 = `${assetPathPrefix}/3a168.svg`
-const imgLogoGdGoC = `${assetPathPrefix}/621f4.svg`
-const imgLogoRdk = `${assetPathPrefix}/92b34.svg`
-const imgLogoPsgPutih = `${assetPathPrefix}/99730.svg`
-const imgLogoPalpod = `${assetPathPrefix}/3c390.svg`
-const imgLogoPermadani = `${assetPathPrefix}/16fa7.svg`
-const imgLogoKmid = `${assetPathPrefix}/af0b2.svg`
-const imgLogoKmtedi = `${assetPathPrefix}/ef8dd.svg`
-const imgLogoApecx = `${assetPathPrefix}/d7ea8.svg`
-const imgLogoTges = `${assetPathPrefix}/b0d5c.svg`
-const imgLogoSkyBase = `${assetPathPrefix}/1a565.svg`
-const imgLogoTed = `${assetPathPrefix}/d1d48.svg`
-const imgLogoLigaTrpl = `${assetPathPrefix}/bcdce.svg`
-const imgLogoVocentic = `${assetPathPrefix}/52abb.svg`
-const imgLogoAssets = `${assetPathPrefix}/ecab7.svg`
+const imgLogoBemSv = '/images/logos/bem-sv.png'
+const imgLogoUgm = '/images/logos/ugm.svg'
+const imgPionirMark = '/images/logos/pionir-mark.svg'
+const imgPionirWordmark = '/images/logos/pionir-wordmark.svg'
+const imgLogoGdGoC = '/images/logos/gdgoc.svg'
+const imgLogoRdk = '/images/logos/rdk.svg'
+const imgLogoPsgPutih = '/images/logos/psg.svg'
+const imgLogoPalpod = '/images/logos/palpod.svg'
+const imgLogoPermadani = '/images/logos/permadani.svg'
+const imgLogoKmid = '/images/logos/kmid.svg'
+const imgLogoKmtedi = '/images/logos/kmtedi.svg'
+const imgLogoApecx = '/images/logos/apecx.svg'
+const imgLogoTges = '/images/logos/tges.svg'
+const imgLogoSkyBase = '/images/logos/skybase.svg'
+const imgLogoTed = '/images/logos/ted.svg'
+const imgLogoLigaTrpl = '/images/logos/liga-trpl.svg'
+const imgLogoVocentic = '/images/logos/vocentic.svg'
+const imgLogoAssets = '/images/logos/assets.svg'
 
 // Recolor white/light-on-dark SVG logos into design-system mute (#6B6B6B) and ink (#111111) on hover
 const svgToneClass =
@@ -43,11 +42,13 @@ const row1Logos: LogoItem[] = [
     render: (
       <div
         className={`relative h-[62px] w-[218px] shrink-0 ${svgToneClass}`}
-        data-node-id="6:383"
-        data-name="Logo UGM"
         title="Universitas Gadjah Mada"
       >
-        <img alt="Universitas Gadjah Mada" className="absolute inset-0 block max-w-none" src={imgLogoUgm} />
+        <img
+          alt="Universitas Gadjah Mada"
+          className="absolute inset-0 block max-w-none"
+          src={imgLogoUgm}
+        />
       </div>
     ),
   },
@@ -58,15 +59,17 @@ const row1Logos: LogoItem[] = [
     render: (
       <div
         className={`relative h-[62px] w-[228px] shrink-0 overflow-clip ${svgToneClass}`}
-        data-node-id="6:499"
-        data-name="Logo PIONIR"
         title="PIONIR Gadjah Mada"
       >
-        <div className="absolute inset-[0_78.5%_0_0]" data-node-id="6:500" data-name="Group">
-          <img alt="" className="absolute inset-0 block max-w-none" src={imgGroup} />
+        <div className="absolute inset-[0_78.5%_0_0]">
+          <img alt="" className="absolute inset-0 block max-w-none" src={imgPionirMark} />
         </div>
-        <div className="absolute inset-[28.38%_0_24.18%_25.06%]" data-node-id="6:507" data-name="Group">
-          <img alt="PIONIR Gadjah Mada" className="absolute inset-0 block max-w-none" src={imgGroup1} />
+        <div className="absolute inset-[28.38%_0_24.18%_25.06%]">
+          <img
+            alt="PIONIR Gadjah Mada"
+            className="absolute inset-0 block max-w-none"
+            src={imgPionirWordmark}
+          />
         </div>
       </div>
     ),
@@ -78,8 +81,6 @@ const row1Logos: LogoItem[] = [
     render: (
       <div
         className={`relative h-[62.937px] w-[149.601px] shrink-0 ${svgToneClass}`}
-        data-node-id="6:528"
-        data-name="Logo GDGoC"
         title="Google Developer Groups on Campus UGM"
       >
         <img alt="GDGoC UGM" className="absolute inset-0 block max-w-none" src={imgLogoGdGoC} />
@@ -91,12 +92,7 @@ const row1Logos: LogoItem[] = [
     width: 118.423,
     height: 62,
     render: (
-      <div
-        className={`relative h-[62px] w-[118.423px] shrink-0 ${svgToneClass}`}
-        data-node-id="6:535"
-        data-name="Logo RDK"
-        title="RDK UGM"
-      >
+      <div className={`relative h-[62px] w-[118.423px] shrink-0 ${svgToneClass}`} title="RDK UGM">
         <img alt="RDK UGM" className="absolute inset-0 block max-w-none" src={imgLogoRdk} />
       </div>
     ),
@@ -106,12 +102,7 @@ const row1Logos: LogoItem[] = [
     width: 54.111,
     height: 62,
     render: (
-      <div
-        className={`relative h-[62px] w-[54.111px] shrink-0 ${svgToneClass}`}
-        data-node-id="6:538"
-        data-name="Logo PSG Putih"
-        title="PSG"
-      >
+      <div className={`relative h-[62px] w-[54.111px] shrink-0 ${svgToneClass}`} title="PSG">
         <img alt="PSG" className="absolute inset-0 block max-w-none" src={imgLogoPsgPutih} />
       </div>
     ),
@@ -121,12 +112,7 @@ const row1Logos: LogoItem[] = [
     width: 144.328,
     height: 62,
     render: (
-      <div
-        className={`relative h-[62px] w-[144.328px] shrink-0 ${svgToneClass}`}
-        data-node-id="6:560"
-        data-name="Logo Palpod"
-        title="Palpod"
-      >
+      <div className={`relative h-[62px] w-[144.328px] shrink-0 ${svgToneClass}`} title="Palpod">
         <img alt="Palpod" className="absolute inset-0 block max-w-none" src={imgLogoPalpod} />
       </div>
     ),
@@ -138,8 +124,6 @@ const row1Logos: LogoItem[] = [
     render: (
       <div
         className={`relative h-[62px] w-[62.885px] shrink-0 ${pngToneClass}`}
-        data-node-id="6:569"
-        data-name="Logo BEM SV"
         title="BEM KM SV UGM"
       >
         <img
@@ -157,12 +141,7 @@ const row1Logos: LogoItem[] = [
     width: 65,
     height: 62,
     render: (
-      <div
-        className={`relative h-[62px] w-[65px] shrink-0 ${svgToneClass}`}
-        data-node-id="6:570"
-        data-name="Logo Permadani"
-        title="Permadani"
-      >
+      <div className={`relative h-[62px] w-[65px] shrink-0 ${svgToneClass}`} title="Permadani">
         <img alt="Permadani" className="absolute inset-0 block max-w-none" src={imgLogoPermadani} />
       </div>
     ),
@@ -172,12 +151,7 @@ const row1Logos: LogoItem[] = [
     width: 139.402,
     height: 61.88,
     render: (
-      <div
-        className={`relative h-[61.88px] w-[139.402px] shrink-0 ${svgToneClass}`}
-        data-node-id="6:604"
-        data-name="Logo KMID"
-        title="KMID"
-      >
+      <div className={`relative h-[61.88px] w-[139.402px] shrink-0 ${svgToneClass}`} title="KMID">
         <img alt="KMID" className="absolute inset-0 block max-w-none" src={imgLogoKmid} />
       </div>
     ),
@@ -190,12 +164,7 @@ const row2Logos: LogoItem[] = [
     width: 61.151,
     height: 62,
     render: (
-      <div
-        className={`relative h-[62px] w-[61.151px] shrink-0 ${svgToneClass}`}
-        data-node-id="6:606"
-        data-name="Logo KMTEDI"
-        title="KMTEDI"
-      >
+      <div className={`relative h-[62px] w-[61.151px] shrink-0 ${svgToneClass}`} title="KMTEDI">
         <img alt="KMTEDI" className="absolute inset-0 block max-w-none" src={imgLogoKmtedi} />
       </div>
     ),
@@ -205,12 +174,7 @@ const row2Logos: LogoItem[] = [
     width: 66.507,
     height: 58.768,
     render: (
-      <div
-        className={`relative h-[58.768px] w-[66.507px] shrink-0 ${svgToneClass}`}
-        data-node-id="6:659"
-        data-name="Logo Apecx"
-        title="Apecx"
-      >
+      <div className={`relative h-[58.768px] w-[66.507px] shrink-0 ${svgToneClass}`} title="Apecx">
         <img alt="Apecx" className="absolute inset-0 block max-w-none" src={imgLogoApecx} />
       </div>
     ),
@@ -220,12 +184,7 @@ const row2Logos: LogoItem[] = [
     width: 47.034,
     height: 62,
     render: (
-      <div
-        className={`relative h-[62px] w-[47.034px] shrink-0 ${svgToneClass}`}
-        data-node-id="6:661"
-        data-name="Logo TGES"
-        title="TGES"
-      >
+      <div className={`relative h-[62px] w-[47.034px] shrink-0 ${svgToneClass}`} title="TGES">
         <img alt="TGES" className="absolute inset-0 block max-w-none" src={imgLogoTges} />
       </div>
     ),
@@ -235,12 +194,7 @@ const row2Logos: LogoItem[] = [
     width: 252,
     height: 62,
     render: (
-      <div
-        className={`relative h-[62px] w-[252px] shrink-0 ${svgToneClass}`}
-        data-node-id="6:679"
-        data-name="Logo SkyBase"
-        title="SkyBase"
-      >
+      <div className={`relative h-[62px] w-[252px] shrink-0 ${svgToneClass}`} title="SkyBase">
         <img alt="SkyBase" className="absolute inset-0 block max-w-none" src={imgLogoSkyBase} />
       </div>
     ),
@@ -252,11 +206,13 @@ const row2Logos: LogoItem[] = [
     render: (
       <div
         className={`relative h-[62px] w-[237.769px] shrink-0 ${svgToneClass}`}
-        data-node-id="6:681"
-        data-name="Logo TED"
         title="Tech Enthusiast Day"
       >
-        <img alt="Tech Enthusiast Day" className="absolute inset-0 block max-w-none" src={imgLogoTed} />
+        <img
+          alt="Tech Enthusiast Day"
+          className="absolute inset-0 block max-w-none"
+          src={imgLogoTed}
+        />
       </div>
     ),
   },
@@ -265,12 +221,7 @@ const row2Logos: LogoItem[] = [
     width: 90.023,
     height: 62,
     render: (
-      <div
-        className={`relative h-[62px] w-[90.023px] shrink-0 ${svgToneClass}`}
-        data-node-id="6:684"
-        data-name="Logo Liga TRPL"
-        title="Liga TRPL"
-      >
+      <div className={`relative h-[62px] w-[90.023px] shrink-0 ${svgToneClass}`} title="Liga TRPL">
         <img alt="Liga TRPL" className="absolute inset-0 block max-w-none" src={imgLogoLigaTrpl} />
       </div>
     ),
@@ -280,12 +231,7 @@ const row2Logos: LogoItem[] = [
     width: 64.73,
     height: 62,
     render: (
-      <div
-        className={`relative h-[62px] w-[64.73px] shrink-0 ${svgToneClass}`}
-        data-node-id="6:685"
-        data-name="Logo Vocentic"
-        title="Vocentic"
-      >
+      <div className={`relative h-[62px] w-[64.73px] shrink-0 ${svgToneClass}`} title="Vocentic">
         <img alt="Vocentic" className="absolute inset-0 block max-w-none" src={imgLogoVocentic} />
       </div>
     ),
@@ -295,12 +241,7 @@ const row2Logos: LogoItem[] = [
     width: 221.288,
     height: 52,
     render: (
-      <div
-        className={`relative h-[52px] w-[221.288px] shrink-0 ${svgToneClass}`}
-        data-node-id="6:688"
-        data-name="Logo Assets"
-        title="ASSETS"
-      >
+      <div className={`relative h-[52px] w-[221.288px] shrink-0 ${svgToneClass}`} title="ASSETS">
         <img alt="ASSETS" className="absolute inset-0 block max-w-none" src={imgLogoAssets} />
       </div>
     ),
@@ -327,10 +268,7 @@ export function Logos() {
         </Reveal>
 
         <Reveal delay={0.05} className="mt-10 md:mt-12">
-          <div
-            data-node-id="6:382"
-            className="flex flex-col gap-9 overflow-hidden py-2 [mask-image:linear-gradient(90deg,transparent,black_10%,black_90%,transparent)]"
-          >
+          <div className="flex flex-col gap-9 overflow-hidden py-2 [mask-image:linear-gradient(90deg,transparent,black_10%,black_90%,transparent)]">
             {/* Row 1: looping left to right */}
             <div className="flex w-max animate-marquee-ltr items-center hover:[animation-play-state:paused]">
               {[0, 1].map((copy) => (
