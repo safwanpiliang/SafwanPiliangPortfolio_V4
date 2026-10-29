@@ -6,7 +6,7 @@ import { Button } from '../ui/Button'
 
 const imgLogo = '/images/logo.svg'
 
-export function Navbar() {
+export function Navbar({ ready }: { ready: boolean }) {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState<string | null>(null)
@@ -41,7 +41,12 @@ export function Navbar() {
   }, [open])
 
   return (
-    <header className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-5 pt-4 md:px-10 md:pt-5 xl:px-[120px]">
+    <motion.header
+      initial={{ opacity: 0, y: -16 }}
+      animate={ready ? { opacity: 1, y: 0 } : undefined}
+      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+      className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-5 pt-4 md:px-10 md:pt-5 xl:px-[120px]"
+    >
       <div
         className={`pointer-events-auto relative flex w-full items-center justify-between rounded-full transition-[max-width,background-color,border-color,box-shadow,padding,backdrop-filter] duration-500 ease-out-soft ${
           scrolled || open
@@ -156,6 +161,6 @@ export function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
-    </header>
+    </motion.header>
   )
 }

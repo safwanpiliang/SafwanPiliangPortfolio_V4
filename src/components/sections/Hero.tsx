@@ -3,11 +3,15 @@ import { ArrowDown } from 'lucide-react'
 import { heroCards, profile } from '../../data/content'
 import { Button } from '../ui/Button'
 import { Container } from '../ui/Layout'
+import { ScrambleWords } from '../effects/ScrambleWords'
 
 const imgSkybaseCat = '/images/hero/skybase-cat.svg'
 const imgHeroCharacterLeft = '/images/hero/character-left.png'
 
 const ease = [0.22, 1, 0.36, 1] as const
+
+// One word per discipline, settling on the last
+const headingWords = ['Interfaces', 'Identities', 'Characters', 'Experiences']
 
 // Fan layout for the stack of work cards; index 3 is the centre card.
 const fan = [
@@ -38,12 +42,20 @@ const cardVariants: Variants = {
   }),
 }
 
-function Bubble({ children, className }: { children: string; className: string }) {
+function Bubble({
+  children,
+  className,
+  ready,
+}: {
+  children: string
+  className: string
+  ready: boolean
+}) {
   return (
     <motion.span
       initial={{ opacity: 0, scale: 0.6 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 1.1, duration: 0.6, ease }}
+      animate={ready ? { opacity: 1, scale: 1 } : undefined}
+      transition={{ delay: 1.25, duration: 0.6, ease }}
       className={`absolute z-30 rounded-full px-4 py-2 text-[15px] font-medium whitespace-nowrap shadow-[0_8px_24px_-8px_rgba(17,17,17,0.3)] ${className}`}
     >
       {children}
@@ -51,11 +63,16 @@ function Bubble({ children, className }: { children: string; className: string }
   )
 }
 
-function CardFan() {
+function CardFan({ ready }: { ready: boolean }) {
   return (
     <div className="relative mx-auto h-[190px] w-full md:h-[290px] xl:h-[360px]" aria-hidden>
       <div className="absolute top-0 left-1/2 h-[360px] w-0 origin-top scale-[0.46] md:scale-[0.78] xl:scale-100">
-        <motion.div initial="hidden" animate="show" whileHover="spread" className="relative">
+        <motion.div
+          initial="hidden"
+          animate={ready ? 'show' : 'hidden'}
+          whileHover={ready ? 'spread' : undefined}
+          className="relative"
+        >
           {/* Enlarged hover target so the fan spreads when the pointer is anywhere over it */}
           <div className="absolute -top-6 -left-[520px] h-[380px] w-[1040px]" />
           {heroCards.map((src, i) => (
@@ -76,9 +93,16 @@ function CardFan() {
               <img src={src} alt="" className="size-full object-cover" />
             </motion.div>
           ))}
-          <Bubble className="-top-2 -left-[300px] bg-accent text-white">@ui-ux</Bubble>
-          <Bubble className="top-0 left-[200px] bg-ink text-paper">@brand</Bubble>
-          <Bubble className="top-[270px] left-[300px] border border-line bg-white text-ink">
+          <Bubble ready={ready} className="-top-2 -left-[300px] bg-accent text-white">
+            @ui-ux
+          </Bubble>
+          <Bubble ready={ready} className="top-0 left-[200px] bg-ink text-paper">
+            @brand
+          </Bubble>
+          <Bubble
+            ready={ready}
+            className="top-[270px] left-[300px] border border-line bg-white text-ink"
+          >
             @3d
           </Bubble>
         </motion.div>
@@ -87,15 +111,16 @@ function CardFan() {
   )
 }
 
-export function Hero() {
+/** `ready` flips once the intro loader is gone; every entrance animation waits for it. */
+export function Hero({ ready }: { ready: boolean }) {
   return (
     <section id="top" className="relative overflow-hidden pt-28 md:pt-36">
       {/* Left 3D Character peeking half-body from the left edge */}
       <motion.div
         aria-hidden
         initial={{ opacity: 0, x: -70, rotate: 12 }}
-        animate={{ opacity: 1, x: 0, rotate: 21 }}
-        transition={{ duration: 1, delay: 0.25, ease }}
+        animate={ready ? { opacity: 1, x: 0, rotate: 21 } : undefined}
+        transition={{ duration: 1, delay: 0.85, ease }}
         className="pointer-events-none absolute top-[150px] -left-[138px] z-20 hidden w-[260px] origin-center select-none sm:block md:top-[155px] md:-left-[178px] md:w-[340px] xl:top-[160px] xl:-left-[210px] xl:w-[400px]"
       >
         <img
@@ -109,8 +134,8 @@ export function Hero() {
       <motion.div
         aria-hidden
         initial={{ opacity: 0, x: 60, y: 12, rotate: 4 }}
-        animate={{ opacity: 1, x: 0, y: 0, rotate: 11 }}
-        transition={{ duration: 1, delay: 0.3, ease }}
+        animate={ready ? { opacity: 1, x: 0, y: 0, rotate: 11 } : undefined}
+        transition={{ duration: 1, delay: 0.95, ease }}
         className="pointer-events-none absolute top-[210px] -right-[16px] z-20 hidden h-[244px] w-[295.621px] origin-center scale-[0.65] select-none sm:block md:top-[235px] md:-right-[14px] md:scale-[0.84] xl:top-[260px] xl:-right-[10px] xl:scale-100"
       >
         <img alt="" className="absolute inset-0 block max-w-none" src={imgSkybaseCat} />
@@ -119,7 +144,7 @@ export function Hero() {
       <Container className="flex flex-col items-center text-center">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
+          animate={ready ? { opacity: 1, y: 0 } : undefined}
           transition={{ duration: 0.7, ease }}
           className="flex max-w-full items-center"
         >
@@ -130,25 +155,25 @@ export function Hero() {
 
         <motion.h1
           initial={{ opacity: 0, y: 28 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.08, ease }}
+          animate={ready ? { opacity: 1, y: 0 } : undefined}
+          transition={{ duration: 0.9, delay: 0.1, ease }}
           className="mt-8 text-[52px] leading-[0.92] font-medium tracking-[-0.055em] md:mt-10 md:text-[96px] xl:text-[120px]"
         >
           Crafting Digital
           <br />
-          Experiences
+          <ScrambleWords words={headingWords} start={ready} delay={1600} />
         </motion.h1>
       </Container>
 
       <div className="mt-10 md:mt-14">
-        <CardFan />
+        <CardFan ready={ready} />
       </div>
 
       <Container className="flex flex-col items-center text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6, ease }}
+          animate={ready ? { opacity: 1, y: 0 } : undefined}
+          transition={{ duration: 0.8, delay: 1.35, ease }}
           className="flex flex-col items-center"
         >
           <p className="text-[18px] font-medium tracking-[-0.02em] md:text-[20px]">
