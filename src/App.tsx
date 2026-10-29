@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { FakeCursors } from './components/effects/FakeCursors'
 import { LoadingScreen, shouldShowIntro } from './components/effects/LoadingScreen'
 import { About } from './components/sections/About'
 import { Footer } from './components/sections/Footer'
@@ -16,7 +17,8 @@ export default function App() {
   const finishIntro = useCallback(() => setReady(true), [])
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-paper text-ink">
+    // relative: cursors position against this box, so overflow-x-clip also clips their chat bubbles
+    <div className="relative min-h-screen overflow-x-clip bg-paper text-ink">
       {showIntro && <LoadingScreen onDone={finishIntro} />}
       <Navbar ready={ready} />
       <main>
@@ -28,6 +30,7 @@ export default function App() {
         <About />
       </main>
       <Footer />
+      {ready && <FakeCursors />}
     </div>
   )
 }
