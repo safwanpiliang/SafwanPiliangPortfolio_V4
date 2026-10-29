@@ -3,11 +3,15 @@ import { ArrowDown } from 'lucide-react'
 import { heroCards, profile } from '../../data/content'
 import { Button } from '../ui/Button'
 import { Container } from '../ui/Layout'
+import { ScrambleWords } from '../effects/ScrambleWords'
 
 const imgSkybaseCat = '/images/hero/skybase-cat.svg'
 const imgHeroCharacterLeft = '/images/hero/character-left.png'
 
 const ease = [0.22, 1, 0.36, 1] as const
+
+// One word per discipline, settling on the last
+const headingWords = ['Interfaces', 'Identities', 'Characters', 'Experiences']
 
 // Fan layout for the stack of work cards; index 3 is the centre card.
 const fan = [
@@ -157,7 +161,7 @@ export function Hero({ ready }: { ready: boolean }) {
         >
           Crafting Digital
           <br />
-          Experiences
+          <ScrambleWords words={headingWords} start={ready} delay={1600} />
         </motion.h1>
       </Container>
 

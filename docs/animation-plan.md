@@ -27,9 +27,9 @@ Sumber yang di-port: repo live `Safwan-Web-Portofolio-V2` (`src/components/effec
    - Urutan: badge role → heading per kata → kipas kartu mengembang → karakter 3D dan kucing SkyBase mengintip dari samping → bubble @ui-ux/@brand/@3d muncul → nama dan tombol CTA.
    - Navbar fade dari atas bersamaan dengan badge.
 
-## Tahap 2: Heading hero (ditunda)
+## Tahap 2: Heading hero (selesai, versi baru)
 
-> Di-skip untuk sekarang: Safwan punya ide lain untuk heading, dikerjakan di akhir. Poin di bawah hanya catatan versi web lama.
+> Dikerjakan dengan ide Safwan: kata terakhir berganti dengan scramble (font tetap Geist) Interfaces → Identities → Characters → Experiences, lalu berhenti. Poin di bawah adalah catatan versi web lama, tidak dipakai.
 
 - "Crafting Digital Experiences" dipecah per kata. Tiap kata naik dari balik garis (mask reveal, `y: 100% → 0`) dengan stagger.
 - **"Digital"** memakai font Doto dan efek scramble huruf acak yang mengunci ke teks asli dalam 1,5 detik. Diporting dari `ScrambleText` lama dan dijalankan sekali setelah reveal.
