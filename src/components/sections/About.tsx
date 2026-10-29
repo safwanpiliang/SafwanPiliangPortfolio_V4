@@ -1,4 +1,4 @@
-import { profile, socials, stats, tools } from '../../data/content'
+import { profile, socials, tools } from '../../data/content'
 import { Container, Label, Reveal, SectionHeader } from '../ui/Layout'
 import { TextLink } from '../ui/TextLink'
 
@@ -15,7 +15,7 @@ export function About() {
                 src={profile.portrait}
                 alt={`Portrait of ${profile.name}`}
                 loading="lazy"
-                className="size-full object-cover grayscale transition-[filter,transform] duration-700 ease-out-soft group-hover:scale-[1.03] group-hover:grayscale-0"
+                className="size-full object-cover object-[50%_60%] grayscale transition-[filter,transform] duration-700 ease-out-soft group-hover:scale-[1.03] group-hover:grayscale-0"
               />
               <figcaption className="absolute right-4 bottom-4 left-4 flex items-center justify-between rounded-full bg-white/80 px-4 py-2.5 text-[13px] font-medium backdrop-blur-md">
                 <span>{profile.name}</span>
@@ -27,8 +27,9 @@ export function About() {
           <div className="col-span-12 flex flex-col md:col-span-6 lg:col-span-6 lg:col-start-7">
             <Reveal>
               <p className="text-[24px] leading-[1.3] font-medium tracking-[-0.025em] md:text-[28px] xl:text-[32px]">
-                I&apos;m Safwan, a D-IV Software Engineering Technology student at Universitas Gadjah
-                Mada who designs across <span className="text-accent">UI/UX</span>, brand, and 3D.
+                I&apos;m Safwan, a D-IV Software Engineering Technology student at Universitas
+                Gadjah Mada who designs across <span className="text-accent">UI/UX</span>, brand,
+                and 3D.
               </p>
             </Reveal>
             <Reveal delay={0.05}>
@@ -40,21 +41,10 @@ export function About() {
               </p>
             </Reveal>
 
-            <Reveal delay={0.1}>
-              <dl className="mt-10 grid grid-cols-3 border-y border-line">
-                {stats.map((s, i) => (
-                  <div key={s.label} className={`py-6 ${i > 0 ? 'border-l border-line pl-4 md:pl-6' : ''}`}>
-                    <dt className="sr-only">{s.label}</dt>
-                    <dd className="text-[36px] leading-none font-medium tracking-[-0.04em] md:text-[48px]">
-                      {s.value}
-                    </dd>
-                    <p className="mt-2 text-[13px] text-mute">{s.label}</p>
-                  </div>
-                ))}
-              </dl>
-            </Reveal>
-
-            <Reveal delay={0.12} className="mt-8 grid gap-6 sm:grid-cols-[120px_1fr] sm:items-center">
+            <Reveal
+              delay={0.1}
+              className="mt-10 grid border-t border-line pt-8 gap-6 sm:grid-cols-[120px_1fr] sm:items-center"
+            >
               <Label>Tools</Label>
               <ul className="flex flex-wrap gap-2">
                 {tools.map((t) => (

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowUp, Check, Copy } from 'lucide-react'
+import { ArrowUp, Check, Copy, Download } from 'lucide-react'
 import { profile, socials } from '../../data/content'
 import { Button } from '../ui/Button'
 import { Container, Reveal } from '../ui/Layout'
@@ -32,8 +32,7 @@ export function Footer() {
                 <span className="text-paper">05</span> — Contact
               </span>
               <h2 className="mt-5 max-w-[920px] text-[clamp(2.25rem,5.2vw,5.5rem)] leading-[0.98] font-medium tracking-[-0.05em] md:mt-7">
-                Have a project in mind?{' '}
-                <span className="text-paper/40">Let&apos;s build something great.</span>
+                Looking for a UI/UX intern? <span className="text-paper/40">My inbox is open.</span>
               </h2>
 
               <div className="mt-8 flex flex-col gap-3.5 sm:flex-row sm:items-center md:mt-10 lg:mt-12">
@@ -51,14 +50,27 @@ export function Footer() {
                   onClick={copy}
                   className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-full border border-paper/20 px-5 text-[14px] font-medium text-paper/80 transition-colors hover:border-paper hover:text-paper sm:self-center"
                 >
-                  {copied ? <Check className="size-4 text-emerald-400" /> : <Copy className="size-4" strokeWidth={1.75} />}
+                  {copied ? (
+                    <Check className="size-4 text-emerald-400" />
+                  ) : (
+                    <Copy className="size-4" strokeWidth={1.75} />
+                  )}
                   {copied ? 'Copied' : 'Copy email'}
                 </button>
+                <a
+                  href={profile.cv}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-full border border-paper/20 px-5 text-[14px] font-medium text-paper/80 transition-colors hover:border-paper hover:text-paper sm:self-center"
+                >
+                  <Download className="size-4" strokeWidth={1.75} />
+                  Download CV
+                </a>
               </div>
 
               <div className="mt-10 flex flex-col gap-2 border-t border-paper/15 pt-5 text-[13px] text-paper/50 sm:flex-row sm:justify-between md:mt-12 lg:mt-16">
-                <span>Usually replies within 24 hours</span>
-                <span>Open to freelance, internships &amp; collaborations</span>
+                <span>Open to UI/UX &amp; design internships, January–July</span>
+                <span>Freelance projects &amp; collaborations welcome</span>
               </div>
             </div>
           </div>
@@ -73,9 +85,15 @@ export function Footer() {
               </TextLink>
             ))}
           </div>
-          <a href="#top" className="group inline-flex items-center gap-1.5 font-medium transition-colors hover:text-accent">
+          <a
+            href="#top"
+            className="group inline-flex items-center gap-1.5 font-medium transition-colors hover:text-accent"
+          >
             <span className="link-slide pb-0.5">Back to top</span>
-            <ArrowUp className="size-4 transition-transform duration-300 group-hover:-translate-y-0.5" strokeWidth={1.75} />
+            <ArrowUp
+              className="size-4 transition-transform duration-300 group-hover:-translate-y-0.5"
+              strokeWidth={1.75}
+            />
           </a>
         </div>
       </Container>

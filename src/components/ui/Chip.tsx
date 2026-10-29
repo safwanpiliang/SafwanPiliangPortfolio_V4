@@ -28,17 +28,3 @@ export function Chip({ active, count, onClick, children }: ChipProps) {
     </button>
   )
 }
-
-export function Tag({ children, tone = 'light' }: { children: string; tone?: 'light' | 'glass' }) {
-  return (
-    <span
-      className={`inline-flex h-7 items-center rounded-full px-3 text-[12px] font-medium ${
-        tone === 'glass'
-          ? 'bg-white/80 text-ink backdrop-blur-md'
-          : 'border border-line bg-paper text-ink'
-      }`}
-    >
-      {children}
-    </span>
-  )
-}

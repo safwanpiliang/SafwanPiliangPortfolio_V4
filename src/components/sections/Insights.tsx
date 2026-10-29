@@ -15,7 +15,7 @@ export function Insights() {
         />
 
         {/* Carousel below desktop, 3-column grid on desktop */}
-        <div className="no-scrollbar -mx-5 mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 md:-mx-10 md:mt-16 md:gap-6 md:px-10 lg:mx-0 lg:grid lg:grid-cols-3 lg:overflow-visible lg:px-0">
+        <div className="no-scrollbar -mx-5 mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 md:-mx-10 md:mt-16 md:gap-6 md:px-10 lg:mx-0 lg:grid lg:grid-cols-2 lg:overflow-visible lg:px-0">
           {articles.map((a, i) => (
             <Reveal
               key={a.id}
@@ -28,7 +28,13 @@ export function Insights() {
         </div>
 
         <Reveal className="mt-12 flex justify-center md:mt-16">
-          <Button href="https://medium.com/" target="_blank" rel="noreferrer" variant="outline" icon="arrow">
+          <Button
+            href="https://safwanpiliang.medium.com"
+            target="_blank"
+            rel="noreferrer"
+            variant="outline"
+            icon="arrow"
+          >
             View all on Medium
           </Button>
         </Reveal>

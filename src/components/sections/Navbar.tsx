@@ -4,8 +4,7 @@ import { ArrowUpRight, Menu, X } from 'lucide-react'
 import { navLinks, profile, socials } from '../../data/content'
 import { Button } from '../ui/Button'
 
-const assetPathPrefix = '/assets'
-const imgFrame1686560991 = `${assetPathPrefix}/e74cf.svg`
+const imgLogo = '/images/logo.svg'
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -56,11 +55,8 @@ export function Navbar() {
           aria-label={profile.name}
           className="group relative block h-[35px] w-[79px] shrink-0 transition-opacity duration-300 hover:opacity-75 md:h-[38px] md:w-[85.5px]"
         >
-          <span
-            data-node-id="14:232"
-            className="absolute top-0 left-0 block h-[141.068px] w-[316.7px] origin-top-left scale-[0.25] md:scale-[0.27]"
-          >
-            <img alt={profile.name} className="absolute inset-0 block max-w-none" src={imgFrame1686560991} />
+          <span className="absolute top-0 left-0 block h-[141.068px] w-[316.7px] origin-top-left scale-[0.25] md:scale-[0.27]">
+            <img alt={profile.name} className="absolute inset-0 block max-w-none" src={imgLogo} />
           </span>
         </a>
 
@@ -135,7 +131,12 @@ export function Navbar() {
               ))}
             </nav>
             <div className="mt-6 flex flex-col gap-5">
-              <Button href="#contact" onClick={() => setOpen(false)} icon="arrow" className="w-full">
+              <Button
+                href="#contact"
+                onClick={() => setOpen(false)}
+                icon="arrow"
+                className="w-full"
+              >
                 Let&apos;s talk
               </Button>
               <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-mute">

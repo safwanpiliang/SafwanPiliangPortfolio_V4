@@ -60,21 +60,29 @@ export function ServiceCard({
           <h3 className="text-[32px] leading-[1.02] font-semibold tracking-[-0.04em] sm:text-[44px] md:text-[54px]">
             {title}
           </h3>
-          <p className={`mt-4 max-w-[540px] text-[15px] leading-relaxed md:mt-5 md:text-[17px] ${styles.muted}`}>
+          <p
+            className={`mt-4 max-w-[540px] text-[15px] leading-relaxed md:mt-5 md:text-[17px] ${styles.muted}`}
+          >
             {description}
           </p>
         </div>
 
-        <span className={`font-mono text-[20px] font-medium tracking-[-0.03em] md:text-[28px] ${styles.muted}`}>
+        <span
+          className={`font-mono text-[20px] font-medium tracking-[-0.03em] md:text-[28px] ${styles.muted}`}
+        >
           ({number})
         </span>
       </div>
 
       {/* Bottom Row: Left summary + tags, Right 3 preview thumbnails + CTA pill */}
-      <div className={`mt-8 grid grid-cols-1 gap-6 border-t pt-6 md:mt-12 md:grid-cols-12 md:items-end md:pt-8 ${styles.divider}`}>
+      <div
+        className={`mt-8 grid grid-cols-1 gap-6 border-t pt-6 md:mt-12 md:grid-cols-12 md:items-end md:pt-8 ${styles.divider}`}
+      >
         <div className="flex flex-col justify-between gap-5 md:col-span-5">
           <div className="flex items-start gap-3.5">
-            <span className={`flex size-10 shrink-0 items-center justify-center rounded-full border ${styles.badge}`}>
+            <span
+              className={`flex size-10 shrink-0 items-center justify-center rounded-full border ${styles.badge}`}
+            >
               <Icon className="size-4" strokeWidth={1.75} aria-hidden />
             </span>
             <p className="text-[14px] leading-snug font-medium md:text-[15px]">{note}</p>

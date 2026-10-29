@@ -1,7 +1,13 @@
 import type { ReactNode } from 'react'
 import { motion } from 'motion/react'
 
-export function Container({ className = '', children }: { className?: string; children: ReactNode }) {
+export function Container({
+  className = '',
+  children,
+}: {
+  className?: string
+  children: ReactNode
+}) {
   return (
     <div className={`mx-auto w-full max-w-[1440px] px-5 md:px-10 xl:px-[120px] ${className}`}>
       {children}
@@ -35,9 +41,7 @@ export function Reveal({
 
 export function Label({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <span
-      className={`text-[12px] font-medium tracking-[0.14em] text-mute uppercase ${className}`}
-    >
+    <span className={`text-[12px] font-medium tracking-[0.14em] text-mute uppercase ${className}`}>
       {children}
     </span>
   )
@@ -70,9 +74,7 @@ export function SectionHeader({
             <h2 className="text-[44px] leading-[0.95] font-medium tracking-[-0.045em] md:text-[72px] xl:text-[88px]">
               {title}
             </h2>
-            {subtitle && (
-              <p className="mt-5 max-w-md text-base text-mute md:text-lg">{subtitle}</p>
-            )}
+            {subtitle && <p className="mt-5 max-w-md text-base text-mute md:text-lg">{subtitle}</p>}
           </Reveal>
           {aside && <Reveal delay={0.1}>{aside}</Reveal>}
         </div>
