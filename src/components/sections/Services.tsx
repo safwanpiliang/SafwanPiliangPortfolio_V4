@@ -17,46 +17,23 @@ const PEEK = 30 // px each waiting card shows below the one in front of it
 const SCALE_STEP = 0.05
 const HOLD = 0.06 // part of each scroll segment where the deck rests between moves
 
-// Exit in two phases: the front card first flips back on its bottom edge (top tipping away),
-// then flies up out of the viewport. FLIP = share of the transition spent on the flip.
-const FLIP = 0.45
-const FLIP_TILT = 62 // deg reached at the end of the flip
-const FLIP_LIFT = 18 // % the card rises during the flip
-const EXIT_TILT = 80
-const EXIT_LIFT = 160
-const EXIT_SCALE = 0.92
+// Exit like a desk calendar page: hinged on its top edge, the bottom swings up toward the
+// viewer and over the top. Past 90deg the page is edge-on and its back face is hidden.
+const FLIP_ANGLE = 110
 
 /**
- * Scroll keyframes for an N-card deck. Stage k = card k is in front; each transition runs
- * between stages with a short hold at both ends and an extra point where the flip ends.
- * Returns the progress points and, per point, the (possibly fractional) stage.
+ * Scroll keyframes for an N-card deck. Stage k = card k is in front; transitions run between
+ * stages with a short hold at each end. Returns the progress points and, per point, the stage.
  */
 export function deckKeyframes(total: number) {
   const step = 1 / (total - 1)
   const points: number[] = []
   const stages: number[] = []
   for (let k = 0; k < total - 1; k++) {
-    const a = k * step + HOLD * step
-    const b = (k + 1) * step - HOLD * step
-    points.push(a, a + FLIP * (b - a), b)
-    stages.push(k, k + FLIP, k + 1)
+    points.push(k * step + HOLD * step, (k + 1) * step - HOLD * step)
+    stages.push(k, k + 1)
   }
   return { points, stages }
-}
-
-/** Exit pose for a card at depth `d` (0 = in front, -1 = fully gone), linear within each phase. */
-export function exitPose(d: number) {
-  const t = Math.min(Math.max(-d, 0), 1)
-  if (t <= FLIP) {
-    const u = t / FLIP
-    return { lift: FLIP_LIFT * u, tilt: FLIP_TILT * u, scale: 1 - (1 - EXIT_SCALE) * u }
-  }
-  const u = (t - FLIP) / (1 - FLIP)
-  return {
-    lift: FLIP_LIFT + (EXIT_LIFT - FLIP_LIFT) * u,
-    tilt: FLIP_TILT + (EXIT_TILT - FLIP_TILT) * u,
-    scale: EXIT_SCALE,
-  }
 }
 
 function StackedServiceCard({
@@ -87,22 +64,11 @@ function StackedServiceCard({
     points,
     depth.map((d) => 1 - Math.max(d, 0) * SCALE_STEP),
   )
-  // Inner layer: this card's own exit up and out of the viewport
-  const poses = depth.map(exitPose)
-  const exitY = useTransform(
-    progress,
-    points,
-    poses.map((p) => `${-p.lift}%`),
-  )
+  // Inner layer: this card's own page flip
   const rotateX = useTransform(
     progress,
     points,
-    poses.map((p) => p.tilt),
-  )
-  const exitScale = useTransform(
-    progress,
-    points,
-    poses.map((p) => p.scale),
+    depth.map((d) => (d < 0 ? FLIP_ANGLE : 0)),
   )
 
   return (
@@ -117,12 +83,12 @@ function StackedServiceCard({
     >
       <motion.div
         style={{
-          y: exitY,
           rotateX,
-          scale: exitScale,
-          // Perspective on the rotating element itself; an ancestor's `perspective` doesn't reach it
-          transformPerspective: 1200,
-          transformOrigin: 'center bottom',
+          // Perspective on the rotating element itself; an ancestor's `perspective` doesn't reach it.
+          // Deep enough that the swinging bottom edge doesn't balloon as it nears the viewer.
+          transformPerspective: 1800,
+          transformOrigin: 'center top',
+          backfaceVisibility: 'hidden',
         }}
         className="will-change-transform"
       >
