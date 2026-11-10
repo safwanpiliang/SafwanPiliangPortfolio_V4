@@ -17,12 +17,7 @@ const PEEK = 30 // px each waiting card shows below the one in front of it
 const SCALE_STEP = 0.05
 const HOLD = 0.06 // part of each scroll segment where the deck rests between moves
 
-// Each card leaves differently so the deck doesn't repeat itself: tilt back, swing left, swing right.
-const exits = [
-  { rotateX: 28, rotate: 0 },
-  { rotateX: 16, rotate: -7 },
-  { rotateX: 16, rotate: 7 },
-]
+const EXIT_TILT = 24 // deg the front card tips back as it lifts off
 
 /**
  * Scroll keyframes for an N-card deck. Stage k = card k is in front; transitions run between
@@ -53,7 +48,6 @@ function StackedServiceCard({
   revealed: boolean
 }) {
   const { points, stages } = deckKeyframes(total)
-  const exit = exits[index % exits.length]
   // Depth behind the front card; negative once this card has left
   const depth = stages.map((k) => index - k)
 
@@ -77,12 +71,7 @@ function StackedServiceCard({
   const rotateX = useTransform(
     progress,
     points,
-    depth.map((d) => (d < 0 ? exit.rotateX : 0)),
-  )
-  const rotate = useTransform(
-    progress,
-    points,
-    depth.map((d) => (d < 0 ? exit.rotate : 0)),
+    depth.map((d) => (d < 0 ? EXIT_TILT : 0)),
   )
 
   return (
@@ -96,10 +85,10 @@ function StackedServiceCard({
       className="col-start-1 row-start-1 w-full will-change-transform"
     >
       <motion.div
-        style={{ y: exitY, rotateX, rotate, transformOrigin: 'center bottom' }}
+        style={{ y: exitY, rotateX, transformOrigin: 'center bottom' }}
         className="will-change-transform"
       >
-        <ServiceCard {...service} index={index} revealed={revealed} />
+        <ServiceCard {...service} revealed={revealed} />
       </motion.div>
     </motion.div>
   )
@@ -107,6 +96,7 @@ function StackedServiceCard({
 
 export function Services() {
   const trackRef = useRef<HTMLDivElement>(null)
+  const deckRef = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({
     target: trackRef,
     offset: ['start start', 'end end'],
@@ -116,7 +106,8 @@ export function Services() {
   useMotionValueEvent(scrollYProgress, 'change', (p) =>
     setActive(Math.min(services.length - 1, Math.round(p * (services.length - 1)))),
   )
-  const inView = useInView(trackRef, { once: true, amount: 0.15 })
+  // Wait until most of the deck itself is on screen, so the first card's entrance is actually seen
+  const inView = useInView(deckRef, { once: true, amount: 0.6 })
 
   return (
     <section id="services" className="pb-24 md:pb-40">
@@ -136,7 +127,7 @@ export function Services() {
         <div ref={trackRef} className="relative mt-10 h-[250vh] md:mt-14 md:h-[270vh]">
           <div className="sticky top-20 flex min-h-[calc(100vh-5rem)] items-center justify-center py-6">
             <Reveal className="w-full max-w-[980px] [perspective:1200px]">
-              <div className="grid grid-cols-1 items-center pb-16">
+              <div ref={deckRef} className="grid grid-cols-1 items-center pb-16">
                 {services.map((s, i) => (
                   <StackedServiceCard
                     key={s.number}
