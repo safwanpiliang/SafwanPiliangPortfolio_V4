@@ -42,7 +42,7 @@ type Props = {
 
 const toneStyles = {
   accent: {
-    card: 'bg-accent text-paper border-accent shadow-[0_32px_80px_-28px_rgba(47,91,255,0.45)]',
+    card: 'bg-accent text-paper border-accent shadow-[0_32px_80px_-28px_rgba(17,17,17,0.45)]',
     muted: 'text-paper/75',
     divider: 'border-paper/20',
     badge: 'border-paper/25 bg-paper/10 text-paper',
