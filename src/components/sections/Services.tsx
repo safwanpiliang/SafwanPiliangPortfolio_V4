@@ -17,9 +17,13 @@ const PEEK = 30 // px each waiting card shows below the one in front of it
 const SCALE_STEP = 0.05
 const HOLD = 0.06 // part of each scroll segment where the deck rests between moves
 
-// Exit like a desk calendar page: hinged on its top edge, the bottom swings up toward the
-// viewer and over the top. Past 90deg the page is edge-on and its back face is hidden.
-const FLIP_ANGLE = 110
+// Exit like a desk calendar page that's pushed away: hinged near its top edge, the bottom swings
+// toward the viewer while the card is pushed up out of view. It never goes edge-on.
+const FLIP_ANGLE = 55
+const EXIT_LIFT = '-120%'
+// The tilt leads and the lift follows, so the card visibly tips before it's pushed away
+const easeOut = (t: number) => 1 - (1 - t) * (1 - t)
+const easeIn = (t: number) => t * t
 
 /**
  * Scroll keyframes for an N-card deck. Stage k = card k is in front; transitions run between
@@ -64,11 +68,18 @@ function StackedServiceCard({
     points,
     depth.map((d) => 1 - Math.max(d, 0) * SCALE_STEP),
   )
-  // Inner layer: this card's own page flip
+  // Inner layer: this card's own flip-and-lift exit
+  const exitY = useTransform(
+    progress,
+    points,
+    depth.map((d) => (d < 0 ? EXIT_LIFT : '0%')),
+    { ease: easeIn },
+  )
   const rotateX = useTransform(
     progress,
     points,
     depth.map((d) => (d < 0 ? FLIP_ANGLE : 0)),
+    { ease: easeOut },
   )
 
   return (
@@ -83,12 +94,12 @@ function StackedServiceCard({
     >
       <motion.div
         style={{
+          y: exitY,
           rotateX,
           // Perspective on the rotating element itself; an ancestor's `perspective` doesn't reach it.
           // Deep enough that the swinging bottom edge doesn't balloon as it nears the viewer.
-          transformPerspective: 1800,
+          transformPerspective: 2200,
           transformOrigin: 'center top',
-          backfaceVisibility: 'hidden',
         }}
         className="will-change-transform"
       >
