@@ -1,6 +1,21 @@
+import { motion, type Variants } from 'motion/react'
 import { ArrowRight, Box, LayoutTemplate, PenTool } from 'lucide-react'
 
 const icons = { ui: LayoutTemplate, brand: PenTool, '3d': Box }
+
+const ease = [0.22, 1, 0.36, 1] as const
+
+// How each card's thumbnails arrive when it reaches the front: rise, slide in from the right, pop.
+const previewEntrances = [
+  { y: 48, rotate: 0, scale: 1, x: 0 },
+  { x: 80, rotate: 6, scale: 1, y: 0 },
+  { scale: 0.6, rotate: -10, x: 0, y: 0 },
+]
+
+const textVariants: Variants = {
+  hidden: { opacity: 0, y: 24 },
+  shown: { opacity: 1, y: 0, transition: { duration: 0.6, ease } },
+}
 
 type Props = {
   number: string
@@ -11,6 +26,10 @@ type Props = {
   note: string
   tone: 'accent' | 'ink' | 'paper'
   previews: readonly string[]
+  /** Position in the deck; picks the thumbnail entrance. */
+  index: number
+  /** True once this card has reached the front of the deck. */
+  revealed: boolean
 }
 
 const toneStyles = {
@@ -46,16 +65,32 @@ export function ServiceCard({
   note,
   tone,
   previews,
+  index,
+  revealed,
 }: Props) {
   const Icon = icons[icon]
   const styles = toneStyles[tone]
+  const from = previewEntrances[index % previewEntrances.length]
+  const previewVariants: Variants = {
+    hidden: { opacity: 0, ...from },
+    shown: (i: number) => ({
+      opacity: 1,
+      x: 0,
+      y: 0,
+      scale: 1,
+      rotate: 0,
+      transition: { duration: 0.7, delay: 0.15 + i * 0.08, ease },
+    }),
+  }
 
   return (
-    <article
+    <motion.article
+      initial="hidden"
+      animate={revealed ? 'shown' : 'hidden'}
       className={`relative flex w-full flex-col justify-between rounded-[24px] border p-6 md:min-h-[520px] md:rounded-[28px] md:p-10 lg:p-12 ${styles.card}`}
     >
       {/* Top Row: Large Title + Description & Number */}
-      <div className="flex items-start justify-between gap-6">
+      <motion.div variants={textVariants} className="flex items-start justify-between gap-6">
         <div className="max-w-[620px]">
           <h3 className="text-[32px] leading-[1.02] font-semibold tracking-[-0.04em] sm:text-[44px] md:text-[54px]">
             {title}
@@ -72,7 +107,7 @@ export function ServiceCard({
         >
           ({number})
         </span>
-      </div>
+      </motion.div>
 
       {/* Bottom Row: Left summary + tags, Right 3 preview thumbnails + CTA pill */}
       <div
@@ -103,8 +138,10 @@ export function ServiceCard({
         <div className="relative md:col-span-7">
           <div className="grid grid-cols-3 gap-2.5 md:gap-3.5">
             {previews.map((src, idx) => (
-              <div
+              <motion.div
                 key={src}
+                custom={idx}
+                variants={previewVariants}
                 className="aspect-[4/3] overflow-hidden rounded-[12px] bg-black/15 md:rounded-[14px]"
               >
                 <img
@@ -113,7 +150,7 @@ export function ServiceCard({
                   loading="lazy"
                   className="size-full object-cover transition-transform duration-500 ease-out-soft hover:scale-105"
                 />
-              </div>
+              </motion.div>
             ))}
           </div>
 
@@ -129,6 +166,6 @@ export function ServiceCard({
           </a>
         </div>
       </div>
-    </article>
+    </motion.article>
   )
 }
