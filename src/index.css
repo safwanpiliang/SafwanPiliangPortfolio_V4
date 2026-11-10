@@ -104,6 +104,43 @@
   }
 }
 
+/* Editorial band: rows slide sideways with the scroll (CSS scroll-driven, runs on the compositor).
+ * Without support (Firefox, Safari < 26) or with reduced motion the rows just sit still. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .band-track {
+      view-timeline: --band block;
+    }
+    .slide-band,
+    .slide-band-reverse {
+      animation: slide-band linear both;
+      animation-timeline: --band;
+      animation-range: cover 0% cover 100%;
+    }
+    .slide-band-reverse {
+      animation-name: slide-band-reverse;
+    }
+  }
+}
+
+@keyframes slide-band {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-35%, 0, 0);
+  }
+}
+
+@keyframes slide-band-reverse {
+  from {
+    transform: translate3d(-35%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

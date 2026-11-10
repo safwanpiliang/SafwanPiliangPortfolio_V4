@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { FakeCursors } from './components/effects/FakeCursors'
 import { LoadingScreen, shouldShowIntro } from './components/effects/LoadingScreen'
 import { About } from './components/sections/About'
+import { EditorialBand } from './components/sections/EditorialBand'
 import { Footer } from './components/sections/Footer'
 import { Hero } from './components/sections/Hero'
 import { Insights } from './components/sections/Insights'
@@ -25,6 +26,7 @@ export default function App() {
         <Hero ready={ready} />
         <Logos />
         <Services />
+        <EditorialBand />
         <Projects />
         <Insights />
         <About />
