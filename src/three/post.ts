@@ -11,10 +11,10 @@ import { FXAAPass } from 'three/addons/postprocessing/FXAAPass.js'
 export const GRADE = {
   // threshold sits just above the paper background (linear luminance ≈ 0.955) so only truly bright surfaces glow:
   // the sunlit white character, backlit grass tips and leaves
-  bloom: { strength: 0.6, radius: 0.5, threshold: 0.96 },
+  bloom: { strength: 0.22, radius: 0.25, threshold: 0.98 }, // small and tight: a glint, not a haze over the image
   exposure: 1.03,
-  saturation: 1.16,
-  tint: [1.04, 1.0, 0.94], // highlights lean warm; shadows lean cool (split toning in the shader)
+  saturation: 1.1,
+  tint: [1.0, 1.0, 1.0], // neutral highlights; shadows lean only slightly cool (split toning in the shader)
 }
 
 export function createComposer(
@@ -51,7 +51,7 @@ export function createComposer(
           vec4 c = texture2D(tDiffuse, vUv);
           c.rgb *= uExposure;
           float l0 = dot(c.rgb, vec3(0.2126, 0.7152, 0.0722));
-          c.rgb *= mix(vec3(0.9, 1.0, 1.14), uTint, smoothstep(0.0, 0.55, l0));   // split toning: cool shadows, warm lights
+          c.rgb *= mix(vec3(0.97, 1.0, 1.04), uTint, smoothstep(0.0, 0.55, l0));   // split toning: cool shadows, warm lights
           c.rgb = mix(vec3(dot(c.rgb, vec3(0.2126, 0.7152, 0.0722))), c.rgb, uSaturation);
           gl_FragColor = c;
         }`,
@@ -63,7 +63,7 @@ export function createComposer(
 }
 
 /**
- * Page paper colour with a faint warm sun glow behind the hill, drawn as the scene background:
+ * Page paper colour with a faint bright glow behind the hill, drawn as the scene background:
  * bloom needs an opaque canvas, so the CSS background can't show through any more.
  */
 export function paperBackground() {
@@ -78,7 +78,7 @@ export function paperBackground() {
   ctx.translate(w / 2, h * 0.72)
   ctx.scale(1, 0.75)
   const g = ctx.createRadialGradient(0, 0, 0, 0, 0, w * 0.42)
-  g.addColorStop(0, '#fff0d4')
+  g.addColorStop(0, '#ffffff') // faint brightening behind the hill, no colour cast
   g.addColorStop(1, 'rgba(250, 250, 248, 0)')
   ctx.fillStyle = g
   ctx.fillRect(-w, -h, w * 2, h * 2)

@@ -54,8 +54,8 @@ export function Landing({ ready }: { ready: boolean }) {
     <section
       ref={sectionRef}
       id="top"
-      // Same paper + warm glow as the scene background (three/post.ts), shown until the canvas fades in
-      className="relative h-[100svh] min-h-[560px] overflow-hidden bg-paper bg-[radial-gradient(ellipse_60%_45%_at_50%_72%,#fff1d9_0%,transparent_70%)]"
+      // Same paper + soft glow as the scene background (three/post.ts), shown until the canvas fades in
+      className="relative h-[100svh] min-h-[560px] overflow-hidden bg-paper bg-[radial-gradient(ellipse_60%_45%_at_50%_72%,#ffffff_0%,transparent_70%)]"
     >
       <canvas
         ref={canvasRef}

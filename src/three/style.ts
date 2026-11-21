@@ -3,18 +3,18 @@ import * as THREE from 'three'
 // Render style ported from the Arumbae Neira demo (src/world/style.js, technique from Bruno Simon's folio-2025):
 // shadowed sides = base colour × shadow colour (not black), screen-space two-colour fog. Only the "day" preset is used here.
 export const DAY = {
-  // Warm sun from behind the hill, a little left of centre and fairly high: grass tips and both trees' crowns glow
+  // Neutral daylight from behind the hill, a little left of centre and fairly high: grass tips and both trees' crowns glow
   // against it (backlight / leaf translucency) the same way on each side, and the character gets a rim of light
   sunDir: [-0.25, 0.62, -0.75] as const,
-  light: '#ffe6bd',
+  light: '#fff8ec', // near-white sun: neither golden nor cold
   lightIntensity: 1.18,
-  shadow: '#a29ee0', // soft lilac shade, light enough that sun-away faces stay readable
+  shadow: '#a7b1d6', // soft blue-grey shade, light enough that sun-away faces stay readable
   shade: [0.0, 0.6] as const,
   // Fog tints match the page's paper background behind the canvas, so distant ground melts into it
-  fogA: '#fbf5ea', // warm haze at the centre
-  fogB: '#f6f3ee',
-  fogDensity: 0.014,
-  foliageTint: '#fff6d0',
+  fogA: '#f8f8f5',
+  fogB: '#f4f5f3',
+  fogDensity: 0.011,
+  foliageTint: '#f4f8e4',
 }
 
 // Shadow fade with camera distance (m): [start, end] and the mid value it fades to
