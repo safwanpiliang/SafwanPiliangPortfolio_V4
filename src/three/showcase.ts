@@ -5,13 +5,13 @@ import { DISSOLVE_GLSL, styleUniforms } from './style'
 // carries the landing over into it (landing surfaces → particles → character + cards).
 
 export const RING = {
-  // The ring is centred near the camera (offset from the character towards it), so the cards wrap around the viewer and
-  // stay big on screen, with the character standing in front of them
-  radius: 14,
-  offset: 6.5, // ring centre: this far from the character towards the camera's end position
-  count: 11, // as many big cards as fit round the circle (the first projects in Selected Work order)
-  size: [7.45, 5.6], // card width, height (m): 4:3 like the covers in Selected Work
-  height: 2.9, // card centre above the character's feet
+  // The ring is centred between the character and the camera, with the camera well behind the centre: the cards wrap
+  // around the viewer and the near ones at the sides turn in, so the curve reads clearly
+  radius: 9,
+  offset: 3.5, // ring centre: this far from the character towards the camera's end position
+  count: 8,
+  size: [6.13, 4.6], // card width, height (m): 4:3 like the covers in Selected Work
+  height: 2.6, // card centre above the character's feet
   corner: 0.065, // corner radius in card-height units (Selected Work: 20 px on a ~300 px tall image)
   spin: 0.04, // idle turn of the ring (rad/s) once the transition is over
 }

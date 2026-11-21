@@ -47,7 +47,7 @@ const PROPS = {
 const SHOWCASE = {
   turn: Math.PI,
   start: { height: 5.0, aim: 3.6 }, // camera height and aim height above the seat
-  end: { dist: 9.5, height: 3.4, aim: 4.3, hfov: 72 }, // aim above the head: the ring sits low, under the copy
+  end: { dist: 9.5, height: 3.4, aim: 4.3, hfov: 84 }, // aim above the head: the ring sits low, under the copy
   dissolveA: [0.1, 0.36], // landing breaks up
   show: [0.08, 0.28, 0.74, 0.92], // particles fade in, then out
   morph: [0.28, 0.78], // particles travel from landing to showcase

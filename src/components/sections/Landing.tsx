@@ -14,12 +14,27 @@ const smooth = (a: number, b: number, x: number) => {
 }
 // Scramble cycles through these and settles on the last
 const showcaseWords = ['Brands', 'Interfaces', 'Worlds', 'Visions']
-// Covers on the ring around the character, in the "All" order of the projects section
-const ringCards: RingCard[] = projects.map((p) => ({
-  cover: p.cover,
-  title: p.title,
-  href: p.behance ?? p.live ?? p.medium ?? p.instagram,
-}))
+// Covers on the ring around the character: the most colourful ones (ranked by colourfulness × brightness), ordered so
+// neighbouring cards differ in hue
+const ringIds = [
+  'kmid',
+  'batam-campus-expo',
+  'vocentic',
+  'liga-trpl',
+  'habitutor',
+  'pionir',
+  'gadani',
+  'tges',
+]
+const ringCards: RingCard[] = ringIds.flatMap((id) =>
+  projects
+    .filter((p) => p.cover.endsWith(`/${id}.webp`))
+    .map((p) => ({
+      cover: p.cover,
+      title: p.title,
+      href: p.behance ?? p.live ?? p.medium ?? p.instagram,
+    })),
+)
 
 function ShowcaseCopy({ revealed }: { revealed: boolean }) {
   return (
