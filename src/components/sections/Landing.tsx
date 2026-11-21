@@ -7,7 +7,7 @@ import { ScrambleWords } from '../effects/ScrambleWords'
 import type { LandingScene, RingCard, Season } from '../../three/landingScene'
 
 const ease = [0.22, 1, 0.36, 1] as const
-const TRANSITION_VH = 220 // scroll distance the scene stays pinned while it turns from the landing into the showcase
+const TRANSITION_MS = 2400 // landing → showcase, played in one go
 const smooth = (a: number, b: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
   return t * t * (3 - 2 * t)
@@ -54,7 +54,6 @@ function ShowcaseCopy({ revealed }: { revealed: boolean }) {
  * Reduced motion: no pin and no transition; the landing shows as a still frame, followed by a still of the showcase.
  */
 export function Landing({ ready }: { ready: boolean }) {
-  const trackRef = useRef<HTMLDivElement>(null)
   const sectionRef = useRef<HTMLElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const copyRef = useRef<HTMLDivElement>(null)
@@ -99,22 +98,21 @@ export function Landing({ ready }: { ready: boolean }) {
     }
   }, [still])
 
-  // Scroll progress through the pinned track drives the scene; the landing copy fades out first, the showcase copy in
-  // last. Styles are written straight to the DOM so scrolling doesn't re-render React.
+  // The transition plays on its own once triggered, so a visitor can never come to rest halfway, in the particle cloud.
+  // At the top of the page, a scroll down (wheel, swipe or key) plays it forward; while it plays, scrolling is held; a
+  // scroll up at the top plays it back. Any other way of leaving the top (anchor link, scrollbar) jumps to the end.
+  // Styles are written straight to the DOM so the animation doesn't re-render React.
   useEffect(() => {
     if (still) return
-    let frame = 0
-    const update = () => {
-      frame = 0
-      const track = trackRef.current
-      if (!track) return
-      const p = Math.min(
-        1,
-        Math.max(0, -track.getBoundingClientRect().top / ((TRANSITION_VH / 100) * innerHeight)),
-      )
-      sceneRef.current?.setProgress(p)
-      const out = 1 - smooth(0.04, 0.22, p),
-        inn = smooth(0.8, 0.96, p)
+    let p = scrollY > 1 ? 1 : 0,
+      from = p,
+      to = p,
+      t0 = 0,
+      raf = 0
+    const apply = (v: number) => {
+      sceneRef.current?.setProgress(v)
+      const out = 1 - smooth(0.02, 0.2, v),
+        inn = smooth(0.72, 0.92, v)
       for (const el of [copyRef.current, toggleRef.current])
         if (el) {
           el.style.opacity = String(out)
@@ -127,16 +125,67 @@ export function Landing({ ready }: { ready: boolean }) {
         show.style.visibility = inn < 0.02 ? 'hidden' : 'visible' // overrides the initial invisible class
         show.style.transform = `translateY(${(1 - inn) * 24}px)`
       }
-      if (p > 0.85) setRevealed(true)
+      if (v > 0.8) setRevealed(true)
     }
-    const onScroll = () => (frame ||= requestAnimationFrame(update))
-    update()
+    const tick = (now: number) => {
+      const k = Math.min(1, (now - t0) / TRANSITION_MS)
+      p = from + (to - from) * (k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2) // ease in-out
+      apply(p)
+      raf = k < 1 ? requestAnimationFrame(tick) : 0
+    }
+    const play = (target: number) => {
+      from = p
+      to = target
+      t0 = performance.now()
+      raf = requestAnimationFrame(tick)
+    }
+    // dir: 1 = towards the page below, -1 = back up
+    const intent = (e: Event, dir: number) => {
+      if (raf) return e.cancelable && e.preventDefault() // hold the page while it plays
+      if (scrollY > 1) return
+      if ((dir > 0 && to === 0) || (dir < 0 && to === 1)) {
+        if (e.cancelable) e.preventDefault()
+        play(dir > 0 ? 1 : 0)
+      }
+    }
+    const onWheel = (e: WheelEvent) => {
+      if (raf) e.preventDefault()
+      else if (Math.abs(e.deltaY) > 2) intent(e, Math.sign(e.deltaY))
+    }
+    let touchY = 0
+    const onTouchStart = (e: TouchEvent) => (touchY = e.touches[0].clientY)
+    const onTouchMove = (e: TouchEvent) => {
+      const dy = touchY - e.touches[0].clientY
+      if (raf) e.preventDefault()
+      else if (Math.abs(dy) > 10) intent(e, Math.sign(dy))
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).closest('input, textarea, select, [contenteditable]')) return
+      const down = ['ArrowDown', 'PageDown'].includes(e.key) || (e.key === ' ' && !e.shiftKey)
+      const up = ['ArrowUp', 'PageUp'].includes(e.key) || (e.key === ' ' && e.shiftKey)
+      if (down || up) intent(e, down ? 1 : -1)
+    }
+    const onScroll = () => {
+      if (scrollY <= 1 || to === 1) return
+      cancelAnimationFrame(raf)
+      raf = 0
+      p = from = to = 1
+      apply(1)
+    }
+    apply(p)
+    const opts = { passive: false }
+    addEventListener('wheel', onWheel, opts)
+    addEventListener('touchstart', onTouchStart, { passive: true })
+    addEventListener('touchmove', onTouchMove, opts)
+    addEventListener('keydown', onKey)
     addEventListener('scroll', onScroll, { passive: true })
-    addEventListener('resize', onScroll)
     return () => {
-      cancelAnimationFrame(frame)
+      cancelAnimationFrame(raf)
+      removeEventListener('wheel', onWheel)
+      removeEventListener('touchstart', onTouchStart)
+      removeEventListener('touchmove', onTouchMove)
+      removeEventListener('keydown', onKey)
       removeEventListener('scroll', onScroll)
-      removeEventListener('resize', onScroll)
     }
   }, [still, sceneReady])
 
@@ -177,9 +226,7 @@ export function Landing({ ready }: { ready: boolean }) {
       ref={sectionRef}
       id="top"
       // Paper + soft glow until the canvas takes over (it draws the same background, three/post.ts)
-      className={`h-[100svh] min-h-[560px] overflow-hidden bg-paper bg-[radial-gradient(ellipse_60%_45%_at_50%_72%,#ffffff_0%,transparent_70%)] ${
-        still ? 'relative' : 'sticky top-0'
-      }`}
+      className={`relative h-[100svh] min-h-[560px] overflow-hidden bg-paper bg-[radial-gradient(ellipse_60%_45%_at_50%_72%,#ffffff_0%,transparent_70%)]`}
       onPointerMove={still ? undefined : onPointerMove}
       onPointerLeave={still ? undefined : () => sceneRef.current?.pick(9, 9)}
       onClick={still ? undefined : onClick}
@@ -279,11 +326,5 @@ export function Landing({ ready }: { ready: boolean }) {
       </>
     )
 
-  // The spacer is the scroll distance of the transition; afterwards the showcase scrolls away with the page
-  return (
-    <div ref={trackRef} className="relative">
-      {landing}
-      <div aria-hidden style={{ height: `${TRANSITION_VH}svh` }} />
-    </div>
-  )
+  return landing
 }

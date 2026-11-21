@@ -48,10 +48,10 @@ const SHOWCASE = {
   turn: Math.PI,
   start: { height: 5.0, aim: 3.6 }, // camera height and aim height above the seat
   end: { dist: 9.5, height: 3.4, aim: 4.3, hfov: 84 }, // aim above the head: the ring sits low, under the copy
-  dissolveA: [0.1, 0.36], // landing breaks up
-  show: [0.08, 0.28, 0.74, 0.92], // particles fade in, then out
-  morph: [0.28, 0.78], // particles travel from landing to showcase
-  dissolveB: [0.62, 0.9], // showcase forms
+  dissolveA: [0.04, 0.3], // landing breaks up
+  show: [0.04, 0.2, 0.62, 0.82], // particles fade in, then out
+  morph: [0.2, 0.68], // particles travel from landing to showcase
+  dissolveB: [0.52, 0.8], // showcase forms
   points: { count: 16000, lite: 6500, size: 0.075 },
 }
 // sRGB palettes for landing particles: summer / autumn (they follow the season toggle)
@@ -288,8 +288,8 @@ export async function createLandingScene(
   function apply() {
     const S = SHOWCASE
     const startDist = 26 * Math.max(1, 1.2 / camera.aspect) // narrow screens pull back so the hill still fills the width
-    const t = THREE.MathUtils.smootherstep(progress, 0, 0.92),
-      tin = THREE.MathUtils.smootherstep(progress, 0.08, 0.92)
+    const t = THREE.MathUtils.smootherstep(progress, 0, 0.9),
+      tin = THREE.MathUtils.smootherstep(progress, 0.05, 0.9)
     const endFov = THREE.MathUtils.radToDeg(
       2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(S.end.hfov / 2)) / camera.aspect),
     )
@@ -364,7 +364,7 @@ export async function createLandingScene(
           const step = dt / SEASON.duration
           autumn.value += THREE.MathUtils.clamp(seasonTarget - autumn.value, -step, step)
           // the ring idles round once it has formed, and holds still under the pointer
-          if (progress > 0.97 && !hovered) ringRot += dt * RING.spin
+          if (progress > 0.99 && !hovered) ringRot += dt * RING.spin
           ring.group.rotation.y = morph.uniforms.uRingRot.value = ringRot
           for (const m of ring.meshes) {
             const u = (m.material as THREE.ShaderMaterial).uniforms.uHover
