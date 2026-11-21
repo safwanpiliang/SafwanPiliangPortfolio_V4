@@ -35,15 +35,16 @@ export const styleUniforms = {
 }
 
 /**
- * Summer green → autumn colour. Each green maps to orange, gold or (sometimes) red, picked from its own hue jitter,
- * so neighbouring blades and clumps differ; brightness follows the original so light and shade are kept.
+ * Summer green → autumn colour. The pick comes from the red/green ratio, which shading doesn't change (it scales all
+ * channels together): picking from the raw colour banded blades into stripes along their root→tip gradient.
+ * Yellow-greens turn gold, deep greens orange, smoothly, so a crown stays one family with gentle variation.
+ * Brightness follows the original so light, shade, backlight and translucency still read.
  */
 const AUTUMN_GLSL = /* glsl */ `
   vec3 autumnize(vec3 c) {
     float l = dot(c, vec3(0.299, 0.587, 0.114));
-    float k = fract(c.r * 53.1 + c.g * 71.7 + c.b * 37.3);   // spreads the small summer hue jitter over the whole range
-    vec3 a = mix(vec3(0.88, 0.36, 0.10), vec3(0.96, 0.68, 0.19), smoothstep(0.15, 0.85, k));   // orange → gold
-    a = mix(a, vec3(0.74, 0.2, 0.09), step(0.72, k) * 0.8);             // some red
+    float k = smoothstep(0.55, 1.15, c.r / max(c.g, 0.001));
+    vec3 a = mix(vec3(0.93, 0.38, 0.08), vec3(0.97, 0.64, 0.13), k);   // deep green → orange, yellow-green → gold
     return a * (0.4 + l * 1.25);
   }
 `
