@@ -25,6 +25,9 @@ const F = {
   hlTint: [1.3, 1.22, 0.8],
   shadow: 0.6,
   floor: 0.32,
+  // Light through the leaves: shadow-side clumps glow when the camera looks towards the sun (crowns seen against the light).
+  // strength = how bright, power = how narrow around the sun direction.
+  translucency: { strength: 0.75, power: 1.6 },
   tipClump: [0.8, 0.85],
 }
 const TREE = {
@@ -240,16 +243,17 @@ export async function createProps(
         )
         .replace(
           '#include <project_vertex>',
-          'vAlign = dot(normalize(wp.xyz - aTree), uSunDir);\n#include <project_vertex>',
+          'vAlign = dot(normalize(wp.xyz - aTree), uSunDir);\n vLeafW = wp.xyz;\n#include <project_vertex>',
         )
       s.vertexShader =
-        'attribute vec3 aTree;\nuniform vec3 uSunDir;\nvarying float vAlign;\n' + s.vertexShader
+        'attribute vec3 aTree;\nuniform vec3 uSunDir;\nvarying float vAlign;\nvarying vec3 vLeafW;\n' +
+        s.vertexShader
       const lit0 =
         'float lit = smoothstep(uShade.x, uShade.y, clamp(reflectedLight.directDiffuse.g, 0.0, 1.0));'
       if (!s.fragmentShader.includes(lit0))
         throw new Error('leafMat: styledMat "lit" line changed.')
       s.fragmentShader =
-        'varying float vAlign;\n' +
+        'uniform vec3 uSunDir;\nvarying float vAlign;\nvarying vec3 vLeafW;\n' +
         s.fragmentShader
           .replace(
             '#include <color_fragment>',
@@ -260,6 +264,15 @@ export async function createProps(
           .replace(
             lit0,
             `float lit = mix(${F.floor.toFixed(2)}, 1.0, smoothstep(${F.grad[0].toFixed(2)}, ${F.grad[1].toFixed(2)}, vAlign)) * mix(${(1 - F.shadow).toFixed(2)}, 1.0, clamp(reflectedLight.directDiffuse.g, 0.0, 1.0));`,
+          )
+          .replace(
+            'base * uLightColor, lit) + totalEmissiveRadiance;',
+            `base * uLightColor, lit) + totalEmissiveRadiance;
+        { // translucency: the sun-away side of a crown lights up when seen against the sun, strongest at its rim
+          float against = pow(max(dot(normalize(vLeafW - cameraPosition), uSunDir), 0.0), ${F.translucency.power.toFixed(1)});
+          float away = smoothstep(0.4, -0.7, vAlign);
+          outgoingLight += base * uLightColor * against * away * ${F.translucency.strength.toFixed(2)};
+        }`,
           )
     },
   )

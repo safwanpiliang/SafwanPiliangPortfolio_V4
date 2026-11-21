@@ -14,7 +14,7 @@ const SEAT = new THREE.Vector3(0, 0, 0.4)
 // Trees near the left and right edges (off to the side so they don't cover the copy); a bush and rocks in front of the hill
 const PROPS = {
   trees: [
-    { x: -9.5, z: 8.5, ry: 0.4, s: 1.25 },
+    { x: -9.8, z: 6.5, ry: 1.0, s: 1.2 },
     { x: 8.6, z: 7.5, ry: 2.1, s: 1.3 },
   ],
   bushes: [
