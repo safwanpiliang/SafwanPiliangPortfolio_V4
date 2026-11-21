@@ -42,10 +42,17 @@ const smooth = (a: number, b: number, x: number) => {
 }
 
 /** Ground height: one rounded hill with soft noise on its flanks. */
+// Ground footprint: an ellipse around the hill, stretched towards the camera (+Z) so the near slope still fills the
+// bottom of the frame. Outside it the ground curves down out of sight, so no flat land shows beside or behind the hill.
+const FOOT = { cz: 8, ax: 13, az: 15, drop: 30 }
 export function heightAt(x: number, z: number) {
   const r2 = (x * x + z * z) / (HILL.radius * HILL.radius)
+  const e = Math.hypot(x / FOOT.ax, (z - FOOT.cz) / FOOT.az),
+    out = Math.max(0, e - 1)
   return (
-    HILL.height * Math.exp(-r2) + (fbm(x * 0.12 + 4, z * 0.12 + 9) - 0.5) * 0.5 * Math.min(1, r2)
+    HILL.height * Math.exp(-r2) -
+    FOOT.drop * out * out +
+    (fbm(x * 0.12 + 4, z * 0.12 + 9) - 0.5) * 0.5 * Math.min(1, r2)
   )
 }
 

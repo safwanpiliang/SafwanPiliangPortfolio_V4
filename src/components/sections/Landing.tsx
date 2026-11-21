@@ -54,7 +54,7 @@ export function Landing({ ready }: { ready: boolean }) {
     <section
       ref={sectionRef}
       id="top"
-      className="relative h-[100svh] min-h-[560px] overflow-hidden bg-[linear-gradient(180deg,#1e9bf5_0%,#52b4fa_45%,#cfe9ff_100%)]"
+      className="relative h-[100svh] min-h-[560px] overflow-hidden bg-paper"
     >
       <canvas
         ref={canvasRef}
@@ -62,9 +62,9 @@ export function Landing({ ready }: { ready: boolean }) {
         className={`absolute inset-0 size-full transition-opacity duration-1000 ${sceneReady ? 'opacity-100' : 'opacity-0'}`}
       />
 
-      <div className="relative z-10 flex flex-col items-center px-5 pt-[22svh] text-center text-white [text-shadow:0_2px_24px_rgba(17,60,120,0.25)] md:pt-[24svh]">
-        <motion.p {...show(0)} className="text-base md:text-xl">
-          Hi, I&apos;m <span className="font-semibold">{profile.name}!</span>
+      <div className="relative z-10 flex flex-col items-center px-5 pt-[22svh] text-center md:pt-[24svh]">
+        <motion.p {...show(0)} className="text-base text-mute md:text-xl">
+          Hi, I&apos;m <span className="font-semibold text-ink">{profile.name}!</span>
         </motion.p>
         <motion.h1
           {...show(0.1)}
@@ -72,7 +72,7 @@ export function Landing({ ready }: { ready: boolean }) {
         >
           Crafting Digital Experience
         </motion.h1>
-        <motion.p {...show(0.2)} className="mt-3 text-lg font-medium md:mt-4 md:text-3xl">
+        <motion.p {...show(0.2)} className="mt-3 text-lg font-medium text-mute md:mt-4 md:text-3xl">
           across <span className="font-semibold">UI</span>,{' '}
           <span className="font-semibold">Graphic Design</span>, and{' '}
           <span className="font-semibold">3D</span>
@@ -83,12 +83,11 @@ export function Landing({ ready }: { ready: boolean }) {
         >
           <Button
             href="#services"
-            variant="light"
             icon={<ArrowDown aria-hidden strokeWidth={1.75} className="size-4" />}
           >
             Explore My Work
           </Button>
-          <Button href={profile.cv} target="_blank" rel="noreferrer" variant="glass" icon="arrow">
+          <Button href={profile.cv} target="_blank" rel="noreferrer" variant="outline" icon="arrow">
             Download CV
           </Button>
         </motion.div>

@@ -8,9 +8,9 @@ export const DAY = {
   lightIntensity: 1.12,
   shadow: '#6f82cc',
   shade: [0.0, 0.55] as const,
-  // Fog tints match the CSS sky gradient behind the canvas, so distant grass melts into the sky
-  fogA: '#cfe9ff',
-  fogB: '#a9d6fb',
+  // Fog tints match the page's paper background behind the canvas, so distant ground melts into it
+  fogA: '#fafaf8',
+  fogB: '#f1f1ee',
   fogDensity: 0.014,
   foliageTint: '#f4f8d8',
 }

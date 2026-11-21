@@ -1,7 +1,7 @@
 import type { AnchorHTMLAttributes, ReactNode } from 'react'
 import { ArrowUpRight } from 'lucide-react'
 
-type Variant = 'primary' | 'outline' | 'light' | 'glass' | 'text'
+type Variant = 'primary' | 'outline' | 'light' | 'text'
 type Size = 'sm' | 'md' | 'lg'
 
 type ButtonProps = {
@@ -20,8 +20,6 @@ const variants: Record<Variant, string> = {
   outline:
     'rounded-full border border-line bg-transparent text-ink hover:border-ink hover:bg-ink/[0.03] active:scale-[0.97]',
   light: 'rounded-full bg-paper text-ink hover:bg-accent hover:text-white active:scale-[0.97]',
-  glass:
-    'rounded-full border border-white/40 bg-white/20 text-white backdrop-blur-sm hover:bg-white hover:text-ink active:scale-[0.97]',
   text: 'text-ink hover:text-accent',
 }
 

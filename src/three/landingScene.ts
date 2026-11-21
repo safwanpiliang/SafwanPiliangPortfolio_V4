@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
-import { createNature, heightAt } from './nature'
+import { createNature, heightAt, rng } from './nature'
+import { createProps } from './props'
 import { DAY, styledMat, styleUniforms } from './style'
 
 // Landing scene: Arumbae Neira grass and render style on one hill, with the Chibi character sitting on top.
@@ -10,6 +11,22 @@ const MODEL = '/models/chibi-sitting.glb'
 // Standing (bind pose) height in metres. Bigger than the Arumbae player (1.75) so it reads over the grass, as in the reference.
 const CHARACTER_HEIGHT = 4.2
 const SEAT = new THREE.Vector3(0, 0, 0.4)
+// Trees near the left and right edges (off to the side so they don't cover the copy); a bush and rocks in front of the hill
+const PROPS = {
+  trees: [
+    { x: -9.5, z: 8.5, ry: 0.4, s: 1.25 },
+    { x: 8.6, z: 7.5, ry: 2.1, s: 1.3 },
+  ],
+  bushes: [
+    { x: -4.4, z: 3.0, s: 1.8 },
+    { x: 4.6, z: 4.4, s: 1.4 },
+  ],
+  rocks: [
+    { model: 'rock_a', x: -3.3, z: 3.9, ry: 1.2, s: 1.6 },
+    { model: 'rock_b', x: 3.7, z: 3.4, ry: 0.3, s: 2.2 },
+    { model: 'rock_d', x: 4.9, z: 2.9, ry: 2.4, s: 1.3 },
+  ],
+}
 
 /** Character material with softer shadows than the rest (Arumbae softMat): shadow colour pulled towards white, wider falloff. */
 function softMat(params: THREE.MeshLambertMaterialParameters) {
@@ -55,7 +72,7 @@ export async function createLandingScene(
   sun.position.set(...DAY.sunDir).multiplyScalar(30)
   sun.castShadow = true
   sun.shadow.mapSize.setScalar(lite ? 1024 : 2048)
-  Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 1, far: 80 })
+  Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 80 })
   sun.shadow.bias = -0.0004
   sun.shadow.normalBias = 0.06
   scene.add(sun, sun.target)
@@ -63,6 +80,7 @@ export async function createLandingScene(
   const time = { value: 0 }
   const seat = SEAT.clone().setY(heightAt(SEAT.x, SEAT.z))
   scene.add(createNature({ blades: lite ? 30000 : 90000, flowers: lite ? 250 : 600, seat, time }))
+  scene.add(await createProps({ ...PROPS, time }, rng(20261122)))
 
   // Character: plain white Chibi with its own colours, sitting idle on the hill top, facing the camera
   const gltf = await new GLTFLoader().loadAsync(MODEL)
