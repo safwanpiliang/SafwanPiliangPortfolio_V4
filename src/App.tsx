@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react'
-import { FakeCursors } from './components/effects/FakeCursors'
 import { LoadingScreen, shouldShowIntro } from './components/effects/LoadingScreen'
 import { About } from './components/sections/About'
 import { EditorialBand } from './components/sections/EditorialBand'
@@ -33,7 +32,7 @@ export default function App() {
         <About />
       </main>
       <Footer />
-      {ready && <FakeCursors />}
+      {/* FakeCursors disabled for now (src/components/effects/FakeCursors.tsx) */}
     </div>
   )
 }
