@@ -5,7 +5,7 @@ import { heightAt } from './nature'
 import { styledMat } from './style'
 
 // Trees, bushes and rocks for the landing hill, ported from the Arumbae Neira demo (src/world/props.js, assets.js).
-// landing-kit.glb = tree_leafy copied out of the demo's banda-kit.glb (vertex colours + UVs for the baked bark).
+// landing-kit.glb = tree_leafy copied out of the demo's banda-kit.glb (its vertex colours only tell leaves from bark).
 // Rocks: batu-1.glb / batu-2.glb from NUSAVERSE (one textured low-poly rock each, repeated in the file; only the mesh is used).
 
 type Shader = THREE.WebGLProgramParametersWithUniforms
@@ -67,7 +67,10 @@ const BUSH = {
     [-0.45, 0.3, -0.3, 0.5, 0.8],
   ] as Clump[],
 }
-const BARK_BOOST = 2.2 // the baked bark texture is darkish
+// Bark: procedural instead of the demo's baked texture, which read as a flat brown at this distance.
+// grooves = depth of the long ridges, ao = how dark the trunk gets where it meets the grass,
+// wrap = softer light-to-shade falloff so the round trunk keeps a gradient, rim = edge light when seen against the sun.
+const BARK = { color: '#7b5b44', grooves: [0.66, 1.12], ao: 0.6, wrap: 0.35, rim: 0.85 }
 
 /** Sway in the vertex shader: the higher above `base`, the further it moves. */
 function windMat(
@@ -190,10 +193,7 @@ async function loadKit() {
     g.applyMatrix4(mesh.matrixWorld)
     kit[mesh.name] = g
   })
-  const bark = await new THREE.TextureLoader().loadAsync('/models/bark-pohon-1.jpg')
-  bark.flipY = false // glTF UVs: v from the top
-  bark.colorSpace = THREE.SRGBColorSpace
-  return { kit, bark }
+  return kit
 }
 
 export type PropPlacement = { x: number; z: number; ry?: number; s?: number }
@@ -208,7 +208,7 @@ export async function createProps(
   },
   rand: () => number,
 ) {
-  const { kit, bark } = await loadKit()
+  const kit = await loadKit()
   const group = new THREE.Group()
   const matrix = ({ x, z, ry = 0, s = 1 }: PropPlacement, sink = 0) =>
     new THREE.Matrix4().compose(
@@ -329,14 +329,46 @@ export async function createProps(
     group.add(mesh)
   }
 
-  // ---- trees: kit trunk with baked bark + a crown of clumps on the branch tips ----
+  // ---- trees: kit trunk with procedural bark + a crown of clumps on the branch tips ----
   const treeMats = opts.trees.map((t) => matrix(t, 0.1))
   const trunkGeo = trunkOnly(kit.tree_leafy)
-  const barkMat = styledMat({ vertexColors: true, map: bark }, (s) => {
-    s.fragmentShader = s.fragmentShader.replace(
-      '#include <color_fragment>',
-      `#include <color_fragment>\n diffuseColor.rgb *= ${BARK_BOOST.toFixed(2)};`,
-    )
+  const barkMat = styledMat({ color: BARK.color }, (s) => {
+    const lit = 'float lit = smoothstep(uShade.x, uShade.y,'
+    if (!s.fragmentShader.includes(lit)) throw new Error('barkMat: styledMat "lit" line changed.')
+    s.vertexShader =
+      'varying vec3 vBark;\n' +
+      s.vertexShader.replace(
+        '#include <begin_vertex>',
+        '#include <begin_vertex>\n vBark = position;',
+      )
+    s.fragmentShader =
+      'varying vec3 vBark;\n' +
+      s.fragmentShader
+        .replace(
+          '#include <color_fragment>',
+          /* glsl */ `#include <color_fragment>
+      { // long ridges that wander a little, darker where the trunk meets the grass (vBark = trunk-local position, base at y = 0)
+        float wander = sin(vBark.y * 2.3) * 1.5 + sin(vBark.y * 7.1 + vBark.x * 3.0) * 0.4;
+        float ridge = sin(vBark.x * 42.0 + vBark.z * 35.0 + wander) * 0.65 + sin(vBark.x * 97.0 - vBark.z * 83.0 + wander * 2.0) * 0.35;
+        ridge = ridge * 0.5 + 0.5;
+        diffuseColor.rgb *= mix(${BARK.grooves[0].toFixed(2)}, ${BARK.grooves[1].toFixed(2)}, ridge);
+        diffuseColor.rgb *= mix(${BARK.ao.toFixed(2)}, 1.0, smoothstep(0.0, 2.2, vBark.y));
+      }`,
+        )
+        .replace(
+          lit,
+          `float lit = smoothstep(uShade.x - ${BARK.wrap.toFixed(2)}, uShade.y + ${BARK.wrap.toFixed(2)},`,
+        )
+        .replace(
+          'base * uLightColor, lit) + totalEmissiveRadiance;',
+          `base * uLightColor, lit) + totalEmissiveRadiance;
+        { // rim light: the silhouette edge glows, more when the trunk is seen against the sun
+          vec3 V = normalize(vViewPosition);
+          float rim = pow(1.0 - clamp(dot(normal, V), 0.0, 1.0), 2.5);
+          float back = clamp(-dot(V, directionalLights[0].direction), 0.0, 1.0);
+          outgoingLight += base * uLightColor * rim * mix(0.35, 1.0, back) * ${BARK.rim.toFixed(2)};
+        }`,
+        )
   })
   barkMat.customProgramCacheKey = () => 'style-bark'
   const trunks = new THREE.InstancedMesh(trunkGeo, barkMat, treeMats.length)
