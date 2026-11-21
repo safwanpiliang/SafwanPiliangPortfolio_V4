@@ -2,16 +2,18 @@ import * as THREE from 'three'
 import { heightAt } from './nature'
 import { cardNormal, styledMat } from './style'
 
-// Falling leaves for autumn: one mesh of instanced leaf cards. Each leaf starts somewhere inside a tree crown and drops
-// to the ground, tumbling, swaying and drifting with the wind, then fades and starts again from the top. All motion is
-// in the vertex shader; leaves only show once the autumn wave (uAutumn) has passed and stop when summer returns.
+// Falling leaves for autumn: one mesh of instanced leaf cards. Each leaf starts inside a tree crown (or in the air over
+// the hill) and is carried sideways by the wind while it sinks, tumbling and swaying, slowly fading out on the way, then
+// starts again. All motion is in the vertex shader; leaves only show once the autumn wave (uAutumn) has passed and stop
+// when summer returns.
 
 const FALL = {
   size: [0.3, 0.5], // leaf card size range (m): big enough to read from the camera ~20 m away
   speed: [0.07, 0.13], // fall cycles per second
   sway: [0.25, 0.6], // side-to-side swing (m)
-  drift: 4.5, // how far the wind carries a leaf over its whole fall (m)
-  wind: [0.82, 0.57], // same direction as the grass wind
+  drift: 9, // how far the wind carries a leaf sideways over its life (m)
+  sink: 0.65, // share of the drop to the ground a leaf covers before it has faded out
+  wind: [0.95, 0.3], // mostly across the screen (left → right), a little towards the camera
   crown: { radius: 2.6, height: [4.4, 6.6] }, // where leaves start, in tree space (scaled by the tree)
   // share of leaves that start in the air over the hill instead (blown in from trees out of frame), and that area
   airborne: 0.4,
@@ -75,8 +77,8 @@ export function createFallingLeaves(opts: {
     }
     origin.set([x, top, z], i * 3)
     // phase, speed, sway, ground height at the landing spot (drift carries it downwind)
-    const gx = x + FALL.wind[0] * FALL.drift,
-      gz = z + FALL.wind[1] * FALL.drift
+    const gx = x + FALL.wind[0] * FALL.drift * FALL.sink,
+      gz = z + FALL.wind[1] * FALL.drift * FALL.sink
     motion.set(
       [
         rand(),
@@ -95,7 +97,14 @@ export function createFallingLeaves(opts: {
   geo.setAttribute('aColor', new THREE.InstancedBufferAttribute(color, 3))
 
   const mat = styledMat(
-    { color: 0xffffff, alphaMap: leafShape(), alphaTest: 0.5, side: THREE.DoubleSide },
+    {
+      color: 0xffffff,
+      alphaMap: leafShape(),
+      alphaTest: 0.5,
+      side: THREE.DoubleSide,
+      transparent: true,
+      depthWrite: false,
+    },
     (s) => {
       s.uniforms.uTime = opts.time
       s.vertexShader =
@@ -105,6 +114,7 @@ export function createFallingLeaves(opts: {
       attribute vec2 aShape;
       uniform float uTime, uAutumn;
       varying vec3 vLeafColor;
+      varying float vLeafFade;
       mat3 rotXZ(float a, float b) {
         float ca = cos(a), sa = sin(a), cb = cos(b), sb = sin(b);
         return mat3(cb, 0.0, -sb, 0.0, 1.0, 0.0, sb, 0.0, cb) * mat3(1.0, 0.0, 0.0, 0.0, ca, sa, 0.0, -sa, ca);
@@ -120,22 +130,28 @@ export function createFallingLeaves(opts: {
         float seed = aShape.y;
         float life = fract(uTime * aMotion.y + aMotion.x);
         vec3 p = aOrigin;
-        p.y = mix(aOrigin.y, aMotion.w + 0.05, life);
+        p.y = mix(aOrigin.y, aMotion.w + 0.05, life * ${FALL.sink.toFixed(2)});
         p.xz += vec2(${FALL.wind[0].toFixed(2)}, ${FALL.wind[1].toFixed(2)}) * ${FALL.drift.toFixed(1)} * life;
         p.xz += vec2(sin(uTime * 1.3 + seed * 6.28), cos(uTime * 1.1 + seed * 4.0)) * aMotion.z;
         float spin = uTime * (1.4 + seed * 2.2) + seed * 10.0;
-        // shows once the autumn wave has passed; fades in at the top and out on the ground
-        float vis = smoothstep(0.35, 1.0, uAutumn) * smoothstep(0.0, 0.06, life) * (1.0 - smoothstep(0.88, 1.0, life));
+        // grows in once the autumn wave has passed; opacity fades in at the start and slowly out over the second half
+        float vis = smoothstep(0.35, 1.0, uAutumn);
+        vLeafFade = smoothstep(0.0, 0.1, life) * (1.0 - smoothstep(0.45, 1.0, life));
         transformed = p + rotXZ(spin, spin * 0.6) * (position * aShape.x * vis);
         vLeafColor = aColor;
       }`,
           )
       s.fragmentShader =
-        'varying vec3 vLeafColor;\n' +
-        s.fragmentShader.replace(
-          '#include <color_fragment>',
-          '#include <color_fragment>\n diffuseColor.rgb = vLeafColor;',
-        )
+        'varying vec3 vLeafColor;\nvarying float vLeafFade;\n' +
+        s.fragmentShader
+          .replace(
+            '#include <color_fragment>',
+            '#include <color_fragment>\n diffuseColor.rgb = vLeafColor;',
+          )
+          .replace(
+            '#include <alphatest_fragment>',
+            '#include <alphatest_fragment>\n diffuseColor.a *= vLeafFade;',
+          )
       cardNormal(s)
     },
   )

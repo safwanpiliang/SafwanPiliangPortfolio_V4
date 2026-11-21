@@ -95,7 +95,7 @@ export async function createLandingScene(
     scene.add(
       createFallingLeaves({
         trees: PROPS.trees,
-        count: lite ? 60 : 220,
+        count: lite ? 40 : 90,
         time,
         rand: rng(20261123),
       }),
@@ -166,6 +166,10 @@ export async function createLandingScene(
   )
   // Shaders compile in parallel; objects whose program isn't ready are skipped, so a single (still) frame could miss the grass
   await renderer.compileAsync(scene, camera)
+  if (import.meta.env.DEV)
+    Object.assign(window, {
+      __landing: { camera, scene, resize, styleUniforms, time, render: () => composer.render() },
+    }) // TEMP debug
   composer.render()
 
   return {
