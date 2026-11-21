@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'motion/react'
-import { ArrowDown } from 'lucide-react'
+import { ArrowDown, Leaf, Sun } from 'lucide-react'
 import { profile } from '../../data/content'
 import { Button } from '../ui/Button'
+import type { LandingScene, Season } from '../../three/landingScene'
 
 const ease = [0.22, 1, 0.36, 1] as const
 
@@ -11,14 +12,13 @@ export function Landing({ ready }: { ready: boolean }) {
   const sectionRef = useRef<HTMLElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [sceneReady, setSceneReady] = useState(false)
+  const [season, setSeason] = useState<Season>('summer')
+  const sceneRef = useRef<LandingScene>(undefined)
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     let disposed = false
-    let scene:
-      | Awaited<ReturnType<typeof import('../../three/landingScene').createLandingScene>>
-      | undefined
     let io: IntersectionObserver | undefined
     // three.js lives in its own chunk, loaded only for this section
     import('../../three/landingScene')
@@ -30,7 +30,7 @@ export function Landing({ ready }: { ready: boolean }) {
       )
       .then((s) => {
         if (disposed) return s.dispose()
-        scene = s
+        sceneRef.current = s
         setSceneReady(true)
         // stop rendering while the section is off screen
         io = new IntersectionObserver(([e]) => s.setActive(e.isIntersecting))
@@ -40,9 +40,15 @@ export function Landing({ ready }: { ready: boolean }) {
     return () => {
       disposed = true
       io?.disconnect()
-      scene?.dispose()
+      sceneRef.current?.dispose()
+      sceneRef.current = undefined
     }
   }, [])
+
+  const pickSeason = (next: Season) => {
+    setSeason(next)
+    sceneRef.current?.setSeason(next)
+  }
 
   const show = (delay: number) => ({
     initial: { opacity: 0, y: 20 },
@@ -93,6 +99,34 @@ export function Landing({ ready }: { ready: boolean }) {
           </Button>
         </motion.div>
       </div>
+
+      {sceneReady && (
+        <div
+          role="group"
+          aria-label="Season"
+          className="absolute right-5 bottom-5 z-10 flex rounded-full border border-line bg-white/80 p-1 text-[13px] font-medium shadow-[0_8px_24px_-12px_rgba(17,17,17,0.25)] backdrop-blur-sm md:right-8 md:bottom-8"
+        >
+          {(
+            [
+              ['summer', 'Summer', Sun],
+              ['autumn', 'Autumn', Leaf],
+            ] as const
+          ).map(([id, label, Icon]) => (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={season === id}
+              onClick={() => pickSeason(id)}
+              className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 transition-colors ${
+                season === id ? 'bg-ink text-paper' : 'text-mute hover:text-ink'
+              }`}
+            >
+              <Icon aria-hidden className="size-3.5" strokeWidth={2} />
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
     </section>
   )
 }

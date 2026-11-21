@@ -44,7 +44,13 @@ function softMat(params: THREE.MeshLambertMaterialParameters) {
   return mat
 }
 
-export type LandingScene = { dispose: () => void; setActive: (on: boolean) => void }
+export type Season = 'summer' | 'autumn'
+export type LandingScene = {
+  dispose: () => void
+  setActive: (on: boolean) => void
+  /** Ease the trees, bushes, grass and ground into the given season (instant for reduced motion). */
+  setSeason: (season: Season) => void
+}
 
 /**
  * Mounts the scene into `canvas`. `lite` = phones: fewer blades, smaller shadow map, pixel ratio 1.
@@ -130,6 +136,7 @@ export async function createLandingScene(
 
   const timer = new THREE.Timer()
   let active = true
+  let seasonTarget = 0 // uAutumn eases towards this
   renderer.setAnimationLoop(
     still
       ? null
@@ -139,6 +146,8 @@ export async function createLandingScene(
           const dt = Math.min(timer.getDelta(), 0.1)
           time.value += dt
           mixer.update(dt)
+          const autumn = styleUniforms.uAutumn
+          autumn.value += (seasonTarget - autumn.value) * Math.min(1, dt * 2.5) // ≈ 1.5 s to settle
           composer.render()
         },
   )
@@ -147,6 +156,13 @@ export async function createLandingScene(
   composer.render()
 
   return {
+    setSeason(season) {
+      seasonTarget = season === 'autumn' ? 1 : 0
+      if (still) {
+        styleUniforms.uAutumn.value = seasonTarget
+        composer.render()
+      }
+    },
     setActive(on) {
       active = on
       timer.update() // drop the time spent paused
