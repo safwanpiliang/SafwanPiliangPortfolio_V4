@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react'
 import { motion } from 'motion/react'
 import { ArrowDown, Leaf, Sun } from 'lucide-react'
-import { profile, projects } from '../../data/content'
+import { projects } from '../../data/content'
 import { Button } from '../ui/Button'
 import { ScrambleWords } from '../effects/ScrambleWords'
 import type { LandingScene, RingCard, Season } from '../../three/landingScene'
@@ -13,6 +13,7 @@ const smooth = (a: number, b: number, x: number) => {
   return t * t * (3 - 2 * t)
 }
 // Scramble cycles through these and settles on the last
+const headingWords = ['Interfaces', 'Identities', 'Characters', 'Experiences']
 const showcaseWords = ['Brands', 'Interfaces', 'Worlds', 'Visions']
 // Covers on the ring around the character: the most colourful ones (ranked by colourfulness × brightness), ordered so
 // neighbouring cards differ in hue
@@ -242,34 +243,40 @@ export function Landing({ ready }: { ready: boolean }) {
 
       <div
         ref={copyRef}
-        className="relative z-10 flex flex-col items-center px-5 pt-[22svh] text-center md:pt-[24svh]"
+        className="relative z-10 flex flex-col items-center px-5 pt-[16svh] text-center md:pt-[15svh]"
       >
-        <motion.p {...show(0)} className="text-base text-mute md:text-xl">
-          Hi, I&apos;m <span className="font-semibold text-ink">{profile.name}!</span>
-        </motion.p>
+        <motion.span
+          {...show(0)}
+          className="rounded-full bg-soft px-3 py-1 text-[9.5px] font-medium tracking-[0.08em] whitespace-nowrap text-mute uppercase sm:px-4 sm:py-1.5 sm:text-[12px] sm:tracking-[0.14em]"
+        >
+          Product &amp; Brand Designer — Yogyakarta-Jakarta, ID
+        </motion.span>
         <motion.h1
           {...show(0.1)}
-          className="mt-3 text-[40px] leading-[1] font-semibold tracking-[-0.045em] md:text-[72px] xl:text-[88px]"
+          className="mt-8 text-[52px] leading-[0.92] font-medium tracking-[-0.055em] md:mt-10 md:text-[96px] xl:text-[120px]"
         >
-          Crafting Digital Experience
+          Crafting Digital
+          <br />
+          <ScrambleWords words={headingWords} start={ready} delay={1600} />
         </motion.h1>
-        <motion.p {...show(0.2)} className="mt-3 text-lg font-medium text-mute md:mt-4 md:text-3xl">
-          across <span className="font-semibold">UI</span>,{' '}
-          <span className="font-semibold">Graphic Design</span>, and{' '}
-          <span className="font-semibold">3D</span>
+        <motion.p
+          {...show(0.2)}
+          className="mt-5 text-xl tracking-[-0.02em] text-mute md:mt-7 md:text-[40px]"
+        >
+          across UI, Graphic Design, and 3D
         </motion.p>
         <motion.div
           {...show(0.3)}
-          className="mt-7 flex flex-col items-center gap-3 sm:flex-row md:mt-9"
+          className="mt-8 flex flex-col items-center gap-5 sm:flex-row sm:gap-8 md:mt-12"
         >
           <Button
-            href="#services"
+            href="#projects"
             icon={<ArrowDown aria-hidden strokeWidth={1.75} className="size-4" />}
           >
-            Explore My Work
+            View selected work
           </Button>
-          <Button href={profile.cv} target="_blank" rel="noreferrer" variant="outline" icon="arrow">
-            Download CV
+          <Button href="#insights" variant="text" icon="arrow">
+            Read my articles
           </Button>
         </motion.div>
       </div>
