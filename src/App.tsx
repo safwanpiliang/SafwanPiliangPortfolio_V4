@@ -24,8 +24,7 @@ export default function App() {
       {showIntro && <LoadingScreen onDone={finishIntro} />}
       <Navbar ready={ready} />
       <main>
-        <Landing ready={ready} />
-        <Hero ready={ready} />
+        <Landing ready={ready}>{(revealed) => <Hero ready={ready && revealed} />}</Landing>
         <Logos />
         <Services />
         <EditorialBand />

@@ -49,6 +49,11 @@ export type Season = 'summer' | 'autumn'
 export type LandingScene = {
   dispose: () => void
   setActive: (on: boolean) => void
+  /**
+   * Scroll transition to the next section, 0 → 1: the camera circles 90° around the character while its aim drops onto
+   * the character, then the frame burns away like paper to reveal the section behind the canvas.
+   */
+  setProgress: (p: number) => void
   /** Sweep the season over the trees, bushes, grass and ground as a wave from the character (instant for reduced motion). */
   setSeason: (season: Season) => void
 }
@@ -64,6 +69,7 @@ export async function createLandingScene(
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: false, // the composer renders off screen; FXAA smooths the edges
+    alpha: true, // the burn transition makes burnt pixels transparent
     powerPreference: 'high-performance',
   })
   renderer.setPixelRatio(Math.min(devicePixelRatio, lite ? 1 : 1.5))
@@ -122,9 +128,22 @@ export async function createLandingScene(
   model.position.set(seat.x, seat.y - posed.min.y, seat.z)
   scene.add(model)
 
-  // Slightly high viewpoint looking a little down on the hill; the aim sits above the character to leave room for the copy
-  const aim = seat.clone().add(new THREE.Vector3(0, 3.6, 0))
-  const composer = createComposer(renderer, scene, camera)
+  // Slightly high viewpoint looking a little down on the hill; the aim sits above the character to leave room for the copy.
+  // The scroll transition circles the camera 90° around the character and drops the aim onto it.
+  const aimStart = seat.clone().add(new THREE.Vector3(0, 3.6, 0)),
+    aimEnd = seat.clone().add(new THREE.Vector3(0, 1.4, 0))
+  const aim = new THREE.Vector3(),
+    offset = new THREE.Vector3()
+  let progress = 0
+  function placeCamera() {
+    const dist = 26 * Math.max(1, 1.2 / camera.aspect) // narrow screens pull back so the hill still fills the width
+    const t = THREE.MathUtils.smootherstep(progress, 0, 0.9)
+    offset.set(0, 5.0, dist).applyAxisAngle(THREE.Object3D.DEFAULT_UP, t * Math.PI * 0.5)
+    camera.position.copy(seat).add(offset)
+    camera.lookAt(aim.lerpVectors(aimStart, aimEnd, t))
+    burn.value = THREE.MathUtils.smoothstep(progress, 0.3, 1)
+  }
+  const { composer, burn } = createComposer(renderer, scene, camera)
   function resize() {
     const w = canvas.clientWidth,
       h = canvas.clientHeight
@@ -132,10 +151,7 @@ export async function createLandingScene(
     composer.setPixelRatio(renderer.getPixelRatio())
     composer.setSize(w, h)
     camera.aspect = w / h
-    // narrow screens pull back so the hill still fills the width
-    const dist = 26 * Math.max(1, 1.2 / camera.aspect)
-    camera.position.set(0, seat.y + 5.0, seat.z + dist)
-    camera.lookAt(aim)
+    placeCamera()
     camera.updateProjectionMatrix()
     renderer.getDrawingBufferSize(styleUniforms.uFogRes.value)
   }
@@ -169,6 +185,10 @@ export async function createLandingScene(
   composer.render()
 
   return {
+    setProgress(p) {
+      progress = THREE.MathUtils.clamp(p, 0, 1)
+      placeCamera()
+    },
     setSeason(season) {
       seasonTarget = season === 'autumn' ? 1 : 0
       if (still) {
