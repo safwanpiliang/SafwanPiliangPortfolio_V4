@@ -12,11 +12,11 @@ const MODEL = '/models/chibi-sitting.glb'
 // Standing (bind pose) height in metres. Bigger than the Arumbae player (1.75) so it reads over the grass, as in the reference.
 const CHARACTER_HEIGHT = 4.2
 const SEAT = new THREE.Vector3(0, 0, 0.4)
-// Trees near the left and right edges (off to the side so they don't cover the copy); a bush and rocks in front of the hill
+// Trees near the left and right edges (a nutmeg on the left, a leafy tree on the right) (off to the side so they don't cover the copy); a bush and rocks in front of the hill
 const PROPS = {
   trees: [
-    { x: -9.4, z: 6.5, ry: 2.1, s: 1.25 },
-    { x: 8.6, z: 7.5, ry: 2.1, s: 1.3 },
+    { kind: 'nutmeg' as const, x: -9.4, z: 6.5, ry: 4.7, s: 1.1 },
+    { kind: 'leafy' as const, x: 8.6, z: 7.5, ry: 2.1, s: 1.3 },
   ],
   bushes: [
     { x: -4.4, z: 3.0, s: 1.8 },

@@ -30,30 +30,73 @@ const F = {
   translucency: { strength: 0.75, power: 1.6 },
   tipClump: [0.8, 0.85],
 }
-const TREE = {
-  palettes: [
-    [0xbcd140, 4],
-    [0x92b840, 4],
-    [0x6f9f4c, 3],
-    [0xeab634, 3],
-  ] as [number, number][],
-  clumps: [
-    [-2.0, 5.5, -0.1, 1.36, 0.85],
-    [2.6, 4.9, 1.1, 1.24, 0.85],
-    [0.9, 5.7, 1.3, 1.18, 0.85],
-    [0.5, 6.4, -0.5, 1.42, 0.85],
-    [-0.4, 4.6, 0.3, 1.0, 0.85],
-  ] as Clump[],
-  // branch tips of the tree_leafy trunk (banda-kit-tips.json): a small clump goes on any tip not already covered
-  tips: [
-    [2.579, 4.765, 1.138],
-    [0.606, 5.781, -0.418],
-    [0.835, 5.514, 1.268],
-    [-2.09, 5.444, -0.205],
-    [-0.277, 4.33, 0.304],
-    [-0.035, 4.895, -0.441],
-  ],
+// Tree kinds (Arumbae config.foliage + banda-kit-tips.json). clumps = crown clumps [x, y, z, radius, squash] in trunk space;
+// tips = branch tips: a small clump goes on any tip not already covered, so no bare branch sticks out.
+const TREES = {
+  leafy: {
+    model: 'tree_leafy',
+    palettes: [
+      [0xbcd140, 4],
+      [0x92b840, 4],
+      [0x6f9f4c, 3],
+      [0xeab634, 3],
+    ] as [number, number][],
+    clumps: [
+      [-2.0, 5.5, -0.1, 1.36, 0.85],
+      [2.6, 4.9, 1.1, 1.24, 0.85],
+      [0.9, 5.7, 1.3, 1.18, 0.85],
+      [0.5, 6.4, -0.5, 1.42, 0.85],
+      [-0.4, 4.6, 0.3, 1.0, 0.85],
+    ] as Clump[],
+    tips: [
+      [2.579, 4.765, 1.138],
+      [0.606, 5.781, -0.418],
+      [0.835, 5.514, 1.268],
+      [-2.09, 5.444, -0.205],
+      [-0.277, 4.33, 0.304],
+      [-0.035, 4.895, -0.441],
+    ],
+  },
+  // nutmeg (pala): wider crown of six clumps over many branch tips; the trunk is decimated to 35% in landing-kit.glb
+  nutmeg: {
+    model: 'nutmeg',
+    palettes: [
+      [0x88b244, 4],
+      [0x70a048, 3],
+      [0x5c9456, 2],
+      [0xc6cf3e, 3],
+    ] as [number, number][],
+    clumps: [
+      [-2.4, 5.4, 0.7, 1.3, 0.85],
+      [0.7, 4.9, 1.9, 1.24, 0.85],
+      [2.7, 5.8, -0.7, 1.3, 0.85],
+      [0.9, 5.6, -2.3, 1.18, 0.85],
+      [-1.9, 5.9, -1.3, 1.12, 0.85],
+      [0.3, 6.6, 0.0, 1.42, 0.85],
+    ] as Clump[],
+    tips: [
+      [2.714, 5.527, -0.69],
+      [1.016, 4.739, -0.454],
+      [0.393, 5.253, 0.305],
+      [0.884, 4.971, -1.786],
+      [0.889, 5.359, -2.246],
+      [-1.969, 5.571, -1.285],
+      [-3.22, 4.375, -0.509],
+      [-2.38, 5.083, 0.693],
+      [-0.751, 4.65, 1.045],
+      [-0.223, 4.845, 1.539],
+      [-0.598, 3.896, -2.332],
+      [-1.066, 3.886, -1.489],
+      [0.858, 4.496, 1.82],
+      [1.564, 3.855, 0.77],
+      [-0.419, 4.117, 0.115],
+      [1.306, 4.582, -1.359],
+      [0.351, 2.785, 0.029],
+      [-0.645, 4.602, -2.074],
+    ],
+  },
 }
+export type TreeKind = keyof typeof TREES
 const BUSH = {
   palettes: [
     [0xb8cf44, 3],
@@ -68,9 +111,9 @@ const BUSH = {
   ] as Clump[],
 }
 // Bark: procedural instead of the demo's baked texture, which read as a flat brown at this distance.
-// grooves = depth of the long ridges, ao = how dark the trunk gets where it meets the grass,
+// grooves = range of the slow colour patches, ao = how dark the trunk gets where it meets the grass,
 // wrap = softer light-to-shade falloff so the round trunk keeps a gradient, rim = edge light when seen against the sun.
-const BARK = { color: '#7b5b44', grooves: [0.66, 1.12], ao: 0.6, wrap: 0.35, rim: 0.85 }
+const BARK = { color: '#7b5b44', grooves: [0.88, 1.06], ao: 0.6, wrap: 0.35, rim: 0.85 }
 
 /** Sway in the vertex shader: the higher above `base`, the further it moves. */
 function windMat(
@@ -201,7 +244,7 @@ export type PropPlacement = { x: number; z: number; ry?: number; s?: number }
 /** Trees (trunk + foliage), bushes and rocks at fixed spots on the hill. */
 export async function createProps(
   opts: {
-    trees: PropPlacement[]
+    trees: (PropPlacement & { kind: TreeKind })[]
     bushes: PropPlacement[]
     rocks: (PropPlacement & { model: 'batu-1' | 'batu-2' })[]
     time: { value: number }
@@ -330,8 +373,6 @@ export async function createProps(
   }
 
   // ---- trees: kit trunk with procedural bark + a crown of clumps on the branch tips ----
-  const treeMats = opts.trees.map((t) => matrix(t, 0.1))
-  const trunkGeo = trunkOnly(kit.tree_leafy)
   const barkMat = styledMat({ color: BARK.color }, (s) => {
     const lit = 'float lit = smoothstep(uShade.x, uShade.y,'
     if (!s.fragmentShader.includes(lit)) throw new Error('barkMat: styledMat "lit" line changed.')
@@ -347,13 +388,10 @@ export async function createProps(
         .replace(
           '#include <color_fragment>',
           /* glsl */ `#include <color_fragment>
-      { // long ridges that wander a little, darker where the trunk meets the grass (vBark = trunk-local position, base at y = 0)
-        float wander = sin(vBark.y * 2.3) * 1.5 + sin(vBark.y * 7.1 + vBark.x * 3.0) * 0.4;
-        float p1 = vBark.x * 42.0 + vBark.z * 35.0 + wander, p2 = vBark.x * 97.0 - vBark.z * 83.0 + wander * 2.0;
-        // fade each layer out once its ridges get narrower than a pixel or two: otherwise they alias into moiré stripes at a distance
-        float ridge = sin(p1) * 0.65 * (1.0 - smoothstep(0.6, 1.6, fwidth(p1))) + sin(p2) * 0.35 * (1.0 - smoothstep(0.6, 1.6, fwidth(p2)));
-        ridge = ridge * 0.5 + 0.5;
-        diffuseColor.rgb *= mix(${BARK.grooves[0].toFixed(2)}, ${BARK.grooves[1].toFixed(2)}, ridge);
+      { // broad, slow colour patches (no fine ridges: those aliased into stripes on wide screens),
+        // darker where the trunk meets the grass (vBark = trunk-local position, base at y = 0)
+        float patchy = sin(vBark.y * 1.7 + vBark.x * 2.1) * 0.6 + sin(vBark.y * 3.3 - vBark.z * 2.7) * 0.4;
+        diffuseColor.rgb *= mix(${BARK.grooves[0].toFixed(2)}, ${BARK.grooves[1].toFixed(2)}, patchy * 0.5 + 0.5);
         diffuseColor.rgb *= mix(${BARK.ao.toFixed(2)}, 1.0, smoothstep(0.0, 2.2, vBark.y));
       }`,
         )
@@ -373,15 +411,19 @@ export async function createProps(
         )
   })
   barkMat.customProgramCacheKey = () => 'style-bark'
-  const trunks = new THREE.InstancedMesh(trunkGeo, barkMat, treeMats.length)
-  treeMats.forEach((m, i) => trunks.setMatrixAt(i, m))
-  trunks.castShadow = trunks.receiveShadow = true
-  group.add(trunks)
-  const crown = [...TREE.clumps]
-  for (const [x, y, z] of TREE.tips)
-    if (!crown.some(([cx, cy, cz, r]) => Math.hypot(x - cx, y - cy, z - cz) < r * 0.9))
-      crown.push([x, y + 0.12, z, F.tipClump[0] * (0.85 + rand() * 0.3), F.tipClump[1]])
-  addFoliage(treeMats, crown, TREE.palettes, true)
+  for (const [kind, def] of Object.entries(TREES)) {
+    const treeMats = opts.trees.filter((t) => t.kind === kind).map((t) => matrix(t, 0.1))
+    if (!treeMats.length) continue
+    const trunks = new THREE.InstancedMesh(trunkOnly(kit[def.model]), barkMat, treeMats.length)
+    treeMats.forEach((m, i) => trunks.setMatrixAt(i, m))
+    trunks.castShadow = true // receives no shadows: leaf-card shadows dappled the round trunk into stripes
+    group.add(trunks)
+    const crown = [...def.clumps]
+    for (const [x, y, z] of def.tips)
+      if (!crown.some(([cx, cy, cz, r]) => Math.hypot(x - cx, y - cy, z - cz) < r * 0.9))
+        crown.push([x, y + 0.12, z, F.tipClump[0] * (0.85 + rand() * 0.3), F.tipClump[1]])
+    addFoliage(treeMats, crown, def.palettes, true)
+  }
 
   // ---- bushes: foliage only ----
   addFoliage(
