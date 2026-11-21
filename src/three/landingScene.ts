@@ -1,0 +1,151 @@
+import * as THREE from 'three'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { createNature, heightAt } from './nature'
+import { DAY, styledMat, styleUniforms } from './style'
+
+// Landing scene: Arumbae Neira grass and render style on one hill, with the Chibi character sitting on top.
+// Static camera; only wind and the character's sitting idle move.
+
+const MODEL = '/models/chibi-sitting.glb'
+// Standing (bind pose) height in metres. Bigger than the Arumbae player (1.75) so it reads over the grass, as in the reference.
+const CHARACTER_HEIGHT = 4.2
+const SEAT = new THREE.Vector3(0, 0, 0.4)
+
+/** Character material with softer shadows than the rest (Arumbae softMat): shadow colour pulled towards white, wider falloff. */
+function softMat(params: THREE.MeshLambertMaterialParameters) {
+  const mat = styledMat(params, (s) => {
+    const lit = 'float lit = smoothstep(uShade.x, uShade.y,',
+      shade = 'outgoingLight = mix(base * uShadowColor,'
+    if (!s.fragmentShader.includes(lit) || !s.fragmentShader.includes(shade))
+      throw new Error('softMat: styledMat shading code changed.')
+    s.fragmentShader = s.fragmentShader
+      .replace(lit, 'float lit = smoothstep(uShade.x - 0.25, uShade.y + 0.40,')
+      .replace(shade, 'outgoingLight = mix(base * mix(uShadowColor, vec3(1.0), 0.60),')
+  })
+  mat.customProgramCacheKey = () => 'style-soft-character'
+  return mat
+}
+
+export type LandingScene = { dispose: () => void; setActive: (on: boolean) => void }
+
+/**
+ * Mounts the scene into `canvas`. `lite` = phones: fewer blades, smaller shadow map, pixel ratio 1.
+ * `still` = reduced motion: renders once, no wind or animation. Resolves once the first frame is drawn.
+ */
+export async function createLandingScene(
+  canvas: HTMLCanvasElement,
+  { lite = false, still = false } = {},
+): Promise<LandingScene> {
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    alpha: true,
+    antialias: !lite,
+    powerPreference: 'high-performance',
+  })
+  renderer.setPixelRatio(Math.min(devicePixelRatio, lite ? 1 : 1.5))
+  renderer.shadowMap.enabled = true
+  renderer.shadowMap.type = THREE.PCFShadowMap
+  renderer.toneMapping = THREE.NoToneMapping // colours out as authored, like Arumbae
+
+  const scene = new THREE.Scene()
+  scene.fog = new THREE.FogExp2(0xffffff, DAY.fogDensity) // colour comes from fogColorAt()
+  const camera = new THREE.PerspectiveCamera(26, 1, 0.1, 200)
+
+  const sun = new THREE.DirectionalLight(0xffffff, Math.PI) // styledMat expects one white light at PI
+  sun.position.set(...DAY.sunDir).multiplyScalar(30)
+  sun.castShadow = true
+  sun.shadow.mapSize.setScalar(lite ? 1024 : 2048)
+  Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 1, far: 80 })
+  sun.shadow.bias = -0.0004
+  sun.shadow.normalBias = 0.06
+  scene.add(sun, sun.target)
+
+  const time = { value: 0 }
+  const seat = SEAT.clone().setY(heightAt(SEAT.x, SEAT.z))
+  scene.add(createNature({ blades: lite ? 30000 : 90000, flowers: lite ? 250 : 600, seat, time }))
+
+  // Character: plain white Chibi with its own colours, sitting idle on the hill top, facing the camera
+  const gltf = await new GLTFLoader().loadAsync(MODEL)
+  const model = gltf.scene
+  model.traverse((o) => {
+    const mesh = o as THREE.Mesh
+    if (!mesh.isMesh) return
+    mesh.castShadow = mesh.receiveShadow = true
+    mesh.frustumCulled = false // skinned bounds don't follow the animation
+    const src = mesh.material as THREE.MeshStandardMaterial
+    mesh.material = softMat({ map: src.map, color: src.color })
+  })
+  const bind = new THREE.Box3().setFromObject(model) // bind pose (standing) bounds
+  model.scale.multiplyScalar(CHARACTER_HEIGHT / (bind.max.y - bind.min.y))
+  const mixer = new THREE.AnimationMixer(model)
+  mixer.clipAction(gltf.animations[0]).play()
+  mixer.update(0)
+  model.updateMatrixWorld(true)
+  const posed = new THREE.Box3().setFromObject(model, true) // sitting pose bounds: rest the lowest point on the ground
+  model.position.set(seat.x, seat.y - posed.min.y, seat.z)
+  scene.add(model)
+
+  // Camera low in front of the hill, looking slightly up at the character
+  const aim = seat.clone().add(new THREE.Vector3(0, 3.8, 0)) // above the character: leaves the top of the frame for the copy
+  function resize() {
+    const w = canvas.clientWidth,
+      h = canvas.clientHeight
+    renderer.setSize(w, h, false)
+    camera.aspect = w / h
+    // narrow screens pull back so the hill still fills the width
+    const dist = 26 * Math.max(1, 1.2 / camera.aspect)
+    camera.position.set(0, seat.y + 2.0, seat.z + dist)
+    camera.lookAt(aim)
+    camera.updateProjectionMatrix()
+    renderer.getDrawingBufferSize(styleUniforms.uFogRes.value)
+  }
+  resize()
+  const ro = new ResizeObserver(() => {
+    resize()
+    if (still) renderer.render(scene, camera)
+  })
+  ro.observe(canvas)
+
+  const timer = new THREE.Timer()
+  let active = true
+  renderer.setAnimationLoop(
+    still
+      ? null
+      : () => {
+          if (!active) return
+          timer.update()
+          const dt = Math.min(timer.getDelta(), 0.1)
+          time.value += dt
+          mixer.update(dt)
+          renderer.render(scene, camera)
+        },
+  )
+  // Shaders compile in parallel; objects whose program isn't ready are skipped, so a single (still) frame could miss the grass
+  await renderer.compileAsync(scene, camera)
+  renderer.render(scene, camera)
+
+  return {
+    setActive(on) {
+      active = on
+      timer.update() // drop the time spent paused
+    },
+    dispose() {
+      renderer.setAnimationLoop(null)
+      ro.disconnect()
+      scene.traverse((o) => {
+        const mesh = o as THREE.Mesh
+        mesh.geometry?.dispose()
+        const mats = Array.isArray(mesh.material)
+          ? mesh.material
+          : mesh.material
+            ? [mesh.material]
+            : []
+        for (const m of mats) {
+          for (const v of Object.values(m)) if (v instanceof THREE.Texture) v.dispose()
+          m.dispose()
+        }
+      })
+      renderer.dispose()
+    },
+  }
+}

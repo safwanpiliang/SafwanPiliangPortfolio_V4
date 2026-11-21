@@ -6,6 +6,7 @@ import { EditorialBand } from './components/sections/EditorialBand'
 import { Footer } from './components/sections/Footer'
 import { Hero } from './components/sections/Hero'
 import { Insights } from './components/sections/Insights'
+import { Landing } from './components/sections/Landing'
 import { Logos } from './components/sections/Logos'
 import { Navbar } from './components/sections/Navbar'
 import { Projects } from './components/sections/Projects'
@@ -23,6 +24,7 @@ export default function App() {
       {showIntro && <LoadingScreen onDone={finishIntro} />}
       <Navbar ready={ready} />
       <main>
+        <Landing ready={ready} />
         <Hero ready={ready} />
         <Logos />
         <Services />

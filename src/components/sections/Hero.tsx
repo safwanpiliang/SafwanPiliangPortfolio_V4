@@ -1,4 +1,5 @@
-import { motion, type Variants } from 'motion/react'
+import { useRef } from 'react'
+import { motion, useInView, type Variants } from 'motion/react'
 import { ArrowDown } from 'lucide-react'
 import { heroCards, profile } from '../../data/content'
 import { Button } from '../ui/Button'
@@ -111,10 +112,16 @@ function CardFan({ ready }: { ready: boolean }) {
   )
 }
 
-/** `ready` flips once the intro loader is gone; every entrance animation waits for it. */
-export function Hero({ ready }: { ready: boolean }) {
+/**
+ * Entrance animations wait for the intro loader (`introDone`) and for the section to scroll into view:
+ * it sits below the 3D landing, so playing on load would happen off screen.
+ */
+export function Hero({ ready: introDone }: { ready: boolean }) {
+  const sectionRef = useRef<HTMLElement>(null)
+  const inView = useInView(sectionRef, { once: true, amount: 0.25 })
+  const ready = introDone && inView
   return (
-    <section id="top" className="relative overflow-hidden pt-28 md:pt-36">
+    <section ref={sectionRef} className="relative overflow-hidden pt-28 md:pt-36">
       {/* Left 3D Character peeking half-body from the left edge */}
       <motion.div
         aria-hidden
