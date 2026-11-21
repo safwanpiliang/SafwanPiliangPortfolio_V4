@@ -3,8 +3,9 @@ import * as THREE from 'three'
 // Render style ported from the Arumbae Neira demo (src/world/style.js, technique from Bruno Simon's folio-2025):
 // shadowed sides = base colour × shadow colour (not black), screen-space two-colour fog. Only the "day" preset is used here.
 export const DAY = {
-  // Warm late-morning sun from behind-left: grass tips glow (backlight) and the character gets a rim of light
-  sunDir: [-0.7, 0.55, -0.45] as const,
+  // Warm sun from behind the hill, a little left of centre and fairly high: grass tips and both trees' crowns glow
+  // against it (backlight / leaf translucency) the same way on each side, and the character gets a rim of light
+  sunDir: [-0.25, 0.62, -0.75] as const,
   light: '#ffe6bd',
   lightIntensity: 1.18,
   shadow: '#a29ee0', // soft lilac shade, light enough that sun-away faces stay readable

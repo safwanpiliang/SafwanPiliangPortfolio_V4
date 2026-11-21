@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { createNature, heightAt, rng } from './nature'
+import { createComposer, paperBackground } from './post'
 import { createProps } from './props'
 import { DAY, styledMat, styleUniforms } from './style'
 
@@ -55,8 +56,7 @@ export async function createLandingScene(
 ): Promise<LandingScene> {
   const renderer = new THREE.WebGLRenderer({
     canvas,
-    alpha: true,
-    antialias: !lite,
+    antialias: false, // the composer renders off screen; FXAA smooths the edges
     powerPreference: 'high-performance',
   })
   renderer.setPixelRatio(Math.min(devicePixelRatio, lite ? 1 : 1.5))
@@ -66,6 +66,7 @@ export async function createLandingScene(
 
   const scene = new THREE.Scene()
   scene.fog = new THREE.FogExp2(0xffffff, DAY.fogDensity) // colour comes from fogColorAt()
+  scene.background = paperBackground()
   const camera = new THREE.PerspectiveCamera(26, 1, 0.1, 200)
 
   const sun = new THREE.DirectionalLight(0xffffff, Math.PI) // styledMat expects one white light at PI
@@ -103,13 +104,15 @@ export async function createLandingScene(
   model.position.set(seat.x, seat.y - posed.min.y, seat.z)
   scene.add(model)
 
-  // Camera low in front of the hill, looking slightly up at the character
   // Slightly high viewpoint looking a little down on the hill; the aim sits above the character to leave room for the copy
   const aim = seat.clone().add(new THREE.Vector3(0, 3.6, 0))
+  const composer = createComposer(renderer, scene, camera)
   function resize() {
     const w = canvas.clientWidth,
       h = canvas.clientHeight
     renderer.setSize(w, h, false)
+    composer.setPixelRatio(renderer.getPixelRatio())
+    composer.setSize(w, h)
     camera.aspect = w / h
     // narrow screens pull back so the hill still fills the width
     const dist = 26 * Math.max(1, 1.2 / camera.aspect)
@@ -121,7 +124,7 @@ export async function createLandingScene(
   resize()
   const ro = new ResizeObserver(() => {
     resize()
-    if (still) renderer.render(scene, camera)
+    if (still) composer.render()
   })
   ro.observe(canvas)
 
@@ -136,12 +139,12 @@ export async function createLandingScene(
           const dt = Math.min(timer.getDelta(), 0.1)
           time.value += dt
           mixer.update(dt)
-          renderer.render(scene, camera)
+          composer.render()
         },
   )
   // Shaders compile in parallel; objects whose program isn't ready are skipped, so a single (still) frame could miss the grass
   await renderer.compileAsync(scene, camera)
-  renderer.render(scene, camera)
+  composer.render()
 
   return {
     setActive(on) {
@@ -164,6 +167,7 @@ export async function createLandingScene(
           m.dispose()
         }
       })
+      composer.dispose()
       renderer.dispose()
     },
   }
