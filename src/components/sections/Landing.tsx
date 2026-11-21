@@ -253,16 +253,16 @@ export function Landing({ ready }: { ready: boolean }) {
         </motion.span>
         <motion.h1
           {...show(0.1)}
-          className="mt-6 text-[44px] leading-[0.92] font-medium tracking-[-0.055em] md:mt-7 md:text-[72px] xl:text-[88px]"
+          className="mt-6 text-[48px] leading-[0.92] font-medium tracking-[-0.055em] md:mt-7 md:text-[90px] xl:text-[110px]"
         >
           Crafting Digital
           <br />
           <ScrambleWords words={headingWords} start={ready} delay={1600} />
         </motion.h1>
-        {/* about a third of the heading size: never wider than “Experiences” */}
+        {/* about a fifth of the heading size: well inside the width of “Experiences” */}
         <motion.p
           {...show(0.2)}
-          className="mt-4 text-[15px] tracking-[-0.02em] text-mute md:mt-5 md:text-[24px] xl:text-[29px]"
+          className="mt-4 text-[11.25px] tracking-[-0.02em] text-mute md:mt-5 md:text-[18px] xl:text-[21.75px]"
         >
           across UI, Graphic Design, and 3D
         </motion.p>
