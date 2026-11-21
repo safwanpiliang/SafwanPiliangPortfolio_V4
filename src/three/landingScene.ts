@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { createNature, heightAt, rng } from './nature'
 import { createComposer, paperBackground } from './post'
+import { createFallingLeaves } from './leaves'
 import { createProps } from './props'
 import { DAY, SEASON, styledMat, styleUniforms } from './style'
 
@@ -89,6 +90,16 @@ export async function createLandingScene(
   styleUniforms.uSeasonOrigin.value.copy(seat) // the season wave spreads out from the character
   scene.add(createNature({ blades: lite ? 30000 : 90000, flowers: lite ? 250 : 600, seat, time }))
   scene.add(await createProps({ ...PROPS, time }, rng(20261122)))
+  // autumn falling leaves (motion only, so none for reduced motion)
+  if (!still)
+    scene.add(
+      createFallingLeaves({
+        trees: PROPS.trees,
+        count: lite ? 60 : 220,
+        time,
+        rand: rng(20261123),
+      }),
+    )
 
   // Character: plain white Chibi with its own colours, sitting idle on the hill top, facing the camera
   const gltf = await new GLTFLoader().loadAsync(MODEL)
