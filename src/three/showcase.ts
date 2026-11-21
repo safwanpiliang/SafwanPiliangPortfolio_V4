@@ -5,12 +5,15 @@ import { DISSOLVE_GLSL, styleUniforms } from './style'
 // carries the landing over into it (landing surfaces → particles → character + cards).
 
 export const RING = {
-  radius: 13.5, // wide enough for 19 landscape cards with a ~0.45 m gap
-  count: 20, // cards spread evenly over the full circle (all 19 projects); the camera stands inside the ring and sees about half
-  size: [4.0, 3.0], // card width, height (m): 4:3 like the covers in Selected Work
-  height: 2.4, // card centre above the character's feet
+  // The ring is centred near the camera (offset from the character towards it), so the cards wrap around the viewer and
+  // stay big on screen, with the character standing in front of them
+  radius: 14,
+  offset: 6.5, // ring centre: this far from the character towards the camera's end position
+  count: 11, // as many big cards as fit round the circle (the first projects in Selected Work order)
+  size: [7.45, 5.6], // card width, height (m): 4:3 like the covers in Selected Work
+  height: 2.9, // card centre above the character's feet
   corner: 0.065, // corner radius in card-height units (Selected Work: 20 px on a ~300 px tall image)
-  spin: 0.05, // idle turn of the ring (rad/s) once the transition is over
+  spin: 0.04, // idle turn of the ring (rad/s) once the transition is over
 }
 
 export type RingCard = { cover: string; href?: string; title: string }

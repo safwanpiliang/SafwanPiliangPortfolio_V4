@@ -191,7 +191,10 @@ export async function createLandingScene(
   showcase.add(standing.model)
 
   const ring = createRing(cards)
-  ring.group.position.copy(seat)
+  ring.group.position
+    .set(Math.sin(SHOWCASE.turn), 0, Math.cos(SHOWCASE.turn))
+    .multiplyScalar(RING.offset)
+    .add(seat)
   ring.group.updateMatrixWorld(true)
   showcase.add(ring.group)
 
@@ -272,7 +275,7 @@ export async function createLandingScene(
       b.ring!.push(1)
     }
   })
-  const morph = createMorphPoints(a, b, seat, rand)
+  const morph = createMorphPoints(a, b, ring.group.position, rand)
   scene.add(morph.points)
 
   // Camera: slightly high viewpoint looking a little down on the hill (aim above the character leaves room for the
