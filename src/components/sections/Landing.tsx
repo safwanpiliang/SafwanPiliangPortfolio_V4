@@ -150,7 +150,7 @@ export function Landing({ ready }: { ready: boolean }) {
     }
     const onWheel = (e: WheelEvent) => {
       if (raf) e.preventDefault()
-      else if (Math.abs(e.deltaY) > 2) intent(e, Math.sign(e.deltaY))
+      else if (e.deltaY) intent(e, Math.sign(e.deltaY)) // even a tiny trackpad nudge, or it would scroll past
     }
     let touchY = 0
     const onTouchStart = (e: TouchEvent) => (touchY = e.touches[0].clientY)
@@ -158,6 +158,7 @@ export function Landing({ ready }: { ready: boolean }) {
       const dy = touchY - e.touches[0].clientY
       if (raf) e.preventDefault()
       else if (Math.abs(dy) > 10) intent(e, Math.sign(dy))
+      else if (dy > 0 && to === 0 && scrollY <= 1 && e.cancelable) e.preventDefault() // don't let the page creep
     }
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest('input, textarea, select, [contenteditable]')) return
@@ -167,6 +168,8 @@ export function Landing({ ready }: { ready: boolean }) {
     }
     const onScroll = () => {
       if (scrollY <= 1 || to === 1) return
+      // a small scroll that slipped through still plays the transition; a far jump (anchor, scrollbar) skips to the end
+      if (scrollY < innerHeight / 2) return raf || play(1)
       cancelAnimationFrame(raf)
       raf = 0
       p = from = to = 1
