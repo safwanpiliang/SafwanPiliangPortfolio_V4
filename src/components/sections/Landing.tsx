@@ -243,7 +243,7 @@ export function Landing({ ready }: { ready: boolean }) {
 
       <div
         ref={copyRef}
-        className="relative z-10 flex flex-col items-center px-5 pt-[16svh] text-center md:pt-[15svh]"
+        className="relative z-10 flex flex-col items-center px-5 pt-[14svh] text-center md:pt-[13svh]"
       >
         <motion.span
           {...show(0)}
@@ -253,21 +253,22 @@ export function Landing({ ready }: { ready: boolean }) {
         </motion.span>
         <motion.h1
           {...show(0.1)}
-          className="mt-8 text-[52px] leading-[0.92] font-medium tracking-[-0.055em] md:mt-10 md:text-[96px] xl:text-[120px]"
+          className="mt-6 text-[44px] leading-[0.92] font-medium tracking-[-0.055em] md:mt-7 md:text-[72px] xl:text-[88px]"
         >
           Crafting Digital
           <br />
           <ScrambleWords words={headingWords} start={ready} delay={1600} />
         </motion.h1>
+        {/* about a third of the heading size: never wider than “Experiences” */}
         <motion.p
           {...show(0.2)}
-          className="mt-5 text-xl tracking-[-0.02em] text-mute md:mt-7 md:text-[40px]"
+          className="mt-4 text-[15px] tracking-[-0.02em] text-mute md:mt-5 md:text-[24px] xl:text-[29px]"
         >
           across UI, Graphic Design, and 3D
         </motion.p>
         <motion.div
           {...show(0.3)}
-          className="mt-8 flex flex-col items-center gap-5 sm:flex-row sm:gap-8 md:mt-12"
+          className="mt-6 flex flex-col items-center gap-4 sm:flex-row sm:gap-8 md:mt-8"
         >
           <Button
             href="#projects"
