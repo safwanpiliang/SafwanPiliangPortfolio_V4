@@ -5,7 +5,8 @@ import { heightAt } from './nature'
 import { styledMat } from './style'
 
 // Trees, bushes and rocks for the landing hill, ported from the Arumbae Neira demo (src/world/props.js, assets.js).
-// landing-kit.glb = tree_leafy and rock_a..d copied out of the demo's banda-kit.glb (vertex colours; the trunk also has UVs).
+// landing-kit.glb = tree_leafy copied out of the demo's banda-kit.glb (vertex colours + UVs for the baked bark).
+// Rocks: batu-1.glb / batu-2.glb from NUSAVERSE (one textured low-poly rock each, repeated in the file; only the mesh is used).
 
 type Shader = THREE.WebGLProgramParametersWithUniforms
 type Clump = [x: number, y: number, z: number, radius: number, squash?: number]
@@ -199,7 +200,7 @@ export async function createProps(
   opts: {
     trees: PropPlacement[]
     bushes: PropPlacement[]
-    rocks: (PropPlacement & { model: string })[]
+    rocks: (PropPlacement & { model: 'batu-1' | 'batu-2' })[]
     time: { value: number }
   },
   rand: () => number,
@@ -343,11 +344,26 @@ export async function createProps(
     false,
   )
 
-  // ---- rocks: kit models with their vertex colours ----
-  const rockMat = styledMat({ vertexColors: true })
+  // ---- rocks: NUSAVERSE low-poly rocks with their own texture, sunk a quarter into the ground ----
+  const rockModels = new Map<string, { geo: THREE.BufferGeometry; mat: THREE.Material }>()
+  for (const name of new Set(opts.rocks.map((r) => r.model))) {
+    const gltf = await new GLTFLoader().loadAsync(`/models/${name}.glb`)
+    let src: THREE.Mesh | undefined
+    gltf.scene.traverse((o) => (src ??= (o as THREE.Mesh).isMesh ? (o as THREE.Mesh) : undefined))
+    if (!src) throw new Error(`${name}.glb has no mesh`)
+    const geo = src.geometry.clone()
+    geo.computeBoundingBox()
+    rockModels.set(name, {
+      geo,
+      mat: styledMat({ map: (src.material as THREE.MeshStandardMaterial).map }),
+    })
+  }
   for (const r of opts.rocks) {
-    const mesh = new THREE.Mesh(kit[r.model], rockMat)
-    mesh.applyMatrix4(matrix(r, 0.15))
+    const { geo, mat } = rockModels.get(r.model)!
+    const box = geo.boundingBox!,
+      s = r.s ?? 1
+    const mesh = new THREE.Mesh(geo, mat)
+    mesh.applyMatrix4(matrix(r, (box.min.y + (box.max.y - box.min.y) * 0.25) * s))
     mesh.castShadow = mesh.receiveShadow = true
     group.add(mesh)
   }

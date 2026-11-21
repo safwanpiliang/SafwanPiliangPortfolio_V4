@@ -22,9 +22,9 @@ const PROPS = {
     { x: 4.6, z: 4.4, s: 1.4 },
   ],
   rocks: [
-    { model: 'rock_a', x: -3.3, z: 3.9, ry: 1.2, s: 1.6 },
-    { model: 'rock_b', x: 3.7, z: 3.4, ry: 0.3, s: 2.2 },
-    { model: 'rock_d', x: 4.9, z: 2.9, ry: 2.4, s: 1.3 },
+    { model: 'batu-1' as const, x: -2.6, z: 4.9, ry: 1.2, s: 2.6 },
+    { model: 'batu-2' as const, x: 3.7, z: 3.4, ry: 0.3, s: 3.4 },
+    { model: 'batu-1' as const, x: 4.9, z: 2.9, ry: 2.4, s: 1.8 },
   ],
 }
 
@@ -104,7 +104,8 @@ export async function createLandingScene(
   scene.add(model)
 
   // Camera low in front of the hill, looking slightly up at the character
-  const aim = seat.clone().add(new THREE.Vector3(0, 3.8, 0)) // above the character: leaves the top of the frame for the copy
+  // Slightly high viewpoint looking a little down on the hill; the aim sits above the character to leave room for the copy
+  const aim = seat.clone().add(new THREE.Vector3(0, 3.6, 0))
   function resize() {
     const w = canvas.clientWidth,
       h = canvas.clientHeight
@@ -112,7 +113,7 @@ export async function createLandingScene(
     camera.aspect = w / h
     // narrow screens pull back so the hill still fills the width
     const dist = 26 * Math.max(1, 1.2 / camera.aspect)
-    camera.position.set(0, seat.y + 2.0, seat.z + dist)
+    camera.position.set(0, seat.y + 5.0, seat.z + dist)
     camera.lookAt(aim)
     camera.updateProjectionMatrix()
     renderer.getDrawingBufferSize(styleUniforms.uFogRes.value)

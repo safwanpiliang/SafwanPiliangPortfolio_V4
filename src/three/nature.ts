@@ -138,7 +138,7 @@ const G = {
   face: 0.6,
   wind: { strength: 0.2, speed: 1.1, freq: 0.5, lean: 0.04, dir: [0.82, 0.57], gust: 1.6 },
   shade: { root: 0.55, tip: 1.15, tipTint: [1.12, 1.08, 0.8] },
-  backlight: { strength: 0.9, power: 3, tip: 0.6 },
+  backlight: { strength: 1.3, power: 2.5, tip: 0.6 }, // a bit stronger and wider than Arumbae: the sun sits behind the hill here
 }
 
 /**

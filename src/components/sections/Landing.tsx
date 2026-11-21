@@ -54,12 +54,13 @@ export function Landing({ ready }: { ready: boolean }) {
     <section
       ref={sectionRef}
       id="top"
-      className="relative h-[100svh] min-h-[560px] overflow-hidden bg-paper"
+      // Paper background with a faint warm sun glow behind the hill
+      className="relative h-[100svh] min-h-[560px] overflow-hidden bg-paper bg-[radial-gradient(ellipse_60%_45%_at_50%_72%,#fff1d9_0%,transparent_70%)]"
     >
       <canvas
         ref={canvasRef}
         aria-hidden
-        className={`absolute inset-0 size-full transition-opacity duration-1000 ${sceneReady ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 size-full saturate-[1.1] transition-opacity duration-1000 ${sceneReady ? 'opacity-100' : 'opacity-0'}`}
       />
 
       <div className="relative z-10 flex flex-col items-center px-5 pt-[22svh] text-center md:pt-[24svh]">
