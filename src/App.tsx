@@ -3,7 +3,6 @@ import { LoadingScreen, shouldShowIntro } from './components/effects/LoadingScre
 import { About } from './components/sections/About'
 import { EditorialBand } from './components/sections/EditorialBand'
 import { Footer } from './components/sections/Footer'
-import { Hero } from './components/sections/Hero'
 import { Insights } from './components/sections/Insights'
 import { Landing } from './components/sections/Landing'
 import { Logos } from './components/sections/Logos'
@@ -13,7 +12,7 @@ import { Services } from './components/sections/Services'
 
 export default function App() {
   const [showIntro] = useState(shouldShowIntro)
-  // Hero entrance waits for the intro so it doesn't play behind the loader
+  // Landing entrance waits for the intro so it doesn't play behind the loader
   const [ready, setReady] = useState(!showIntro)
   const finishIntro = useCallback(() => setReady(true), [])
 
@@ -23,7 +22,7 @@ export default function App() {
       {showIntro && <LoadingScreen onDone={finishIntro} />}
       <Navbar ready={ready} />
       <main>
-        <Landing ready={ready}>{(revealed) => <Hero ready={ready && revealed} />}</Landing>
+        <Landing ready={ready} />
         <Logos />
         <Services />
         <EditorialBand />

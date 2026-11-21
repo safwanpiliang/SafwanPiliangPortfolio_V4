@@ -33,7 +33,31 @@ export const styleUniforms = {
   uFoliageTint: color(DAY.foliageTint),
   uAutumn: { value: 0 }, // season wave progress: 0 = all summer, 1 = all autumn (tinted materials only); driven by the scene
   uSeasonOrigin: { value: new THREE.Vector3() }, // where the season wave starts (the character), set by the scene
+  // Scroll transition: the landing (group a) dissolves away and the showcase (group b) dissolves in; 0 = solid, 1 = gone
+  uDissolveA: { value: 0 },
+  uDissolveB: { value: 1 },
 }
+
+/** Which dissolve uniform a styled material follows: 'a' = landing, 'b' = section 2 showcase. */
+export type DissolveGroup = 'a' | 'b'
+// Patchy world-space dissolve with a bright rim right at the edge (bloom picks it up), so it reads as matter breaking
+// into the particles that take over
+export const DISSOLVE_GLSL = /* glsl */ `
+  float dsHash(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+  float dsNoise(vec3 p) {
+    vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(mix(dsHash(i), dsHash(i + vec3(1, 0, 0)), f.x), mix(dsHash(i + vec3(0, 1, 0)), dsHash(i + vec3(1, 1, 0)), f.x), f.y),
+               mix(mix(dsHash(i + vec3(0, 0, 1)), dsHash(i + vec3(1, 0, 1)), f.x), mix(dsHash(i + vec3(0, 1, 1)), dsHash(i + vec3(1, 1, 1)), f.x), f.y), f.z);
+  }
+  // returns the rim strength (0..1); discards dissolved fragments
+  float dissolveAt(vec3 w, float amount) {
+    if (amount <= 0.0) return 0.0;
+    float n = dsNoise(w * 1.3) * 0.65 + dsNoise(w * 4.1) * 0.35;
+    float th = amount * 1.12 - 0.06;
+    if (n < th) discard;
+    return 1.0 - smoothstep(0.0, 0.05, n - th);
+  }
+`
 
 /**
  * Summer green → autumn colour. The pick comes from the red/green ratio, which shading doesn't change (it scales all
@@ -95,26 +119,31 @@ export function styledMat(
 ) {
   const mat = new THREE.MeshLambertMaterial(params)
   const tint = Boolean(params.userData?.tint),
-    leaf = Boolean(params.userData?.leaf)
+    leaf = Boolean(params.userData?.leaf),
+    group: DissolveGroup = params.userData?.group ?? 'a'
   mat.onBeforeCompile = (s) => {
     Object.assign(s.uniforms, styleUniforms)
-    if (tint)
-      s.vertexShader =
-        'varying vec3 vSeasonW;\n' +
-        s.vertexShader.replace(
-          '#include <project_vertex>',
-          /* glsl */ `#include <project_vertex>
+    s.vertexShader =
+      'varying vec3 vSeasonW;\n' +
+      s.vertexShader.replace(
+        '#include <project_vertex>',
+        /* glsl */ `#include <project_vertex>
       #ifdef USE_INSTANCING
         vSeasonW = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz;
       #else
         vSeasonW = (modelMatrix * vec4(transformed, 1.0)).xyz;
       #endif`,
-        )
+      )
     s.fragmentShader =
-      'uniform vec3 uLightColor, uShadowColor, uFoliageTint;\nuniform vec2 uShade;\nuniform float uAutumn;\n' +
-      (tint ? AUTUMN_GLSL : '') +
+      'uniform vec3 uLightColor, uShadowColor, uFoliageTint;\nuniform vec2 uShade;\nuniform float uAutumn, uDissolveA, uDissolveB;\nvarying vec3 vSeasonW;\nfloat dsRim = 0.0;\n' +
+      DISSOLVE_GLSL +
+      (tint ? AUTUMN_GLSL.replace('varying vec3 vSeasonW;', '') : '') +
       FOG_GLSL +
       s.fragmentShader
+        .replace(
+          '#include <clipping_planes_fragment>',
+          `#include <clipping_planes_fragment>\n\tdsRim = dissolveAt(vSeasonW, uDissolve${group.toUpperCase()});`,
+        )
         .replace(
           '#include <lights_lambert_fragment>',
           '#include <lights_lambert_fragment>\n\tmaterial.diffuseColor = vec3(1.0);',
@@ -133,7 +162,8 @@ export function styledMat(
         base = mix(base, ${leaf ? 'autumnizeLeaf' : 'autumnize'}(base), sa) * (1.0 + sa * (1.0 - sa) * 4.0 * ${SEASON.glow.toFixed(2)})`
             : ''
         };
-        outgoingLight = mix(base * uShadowColor, base * uLightColor, lit) + totalEmissiveRadiance;`,
+        outgoingLight = mix(base * uShadowColor, base * uLightColor, lit) + totalEmissiveRadiance;
+        outgoingLight = mix(outgoingLight, vec3(1.6, 1.45, 1.25), dsRim);`,
         )
         .replace(
           '#include <fog_fragment>',
@@ -144,7 +174,7 @@ export function styledMat(
         )
     extend?.(s)
   }
-  mat.customProgramCacheKey = () => `style${tint ? '-tint' : ''}${leaf ? '-leaf' : ''}`
+  mat.customProgramCacheKey = () => `style${tint ? '-tint' : ''}${leaf ? '-leaf' : ''}-${group}`
   return mat
 }
 

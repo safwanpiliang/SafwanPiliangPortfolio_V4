@@ -311,16 +311,6 @@ export const articles = [
 ]
 
 // Hero fan: project covers, index 3 is the centre card
-export const heroCards = [
-  project('kmid-logo'),
-  project('bem-sv'),
-  project('porsenigama'),
-  project('pionir'),
-  project('muzzy'),
-  project('ted'),
-  project('gadani'),
-]
-
 export const tools = ['Figma', 'FigJam', 'Illustrator', 'Photoshop', 'Blender']
 
 // Fake "multiplayer" cursors that wander the page on desktop

@@ -17,10 +17,6 @@ export const GRADE = {
   tint: [1.0, 1.0, 1.0], // neutral highlights; shadows lean only slightly cool (split toning in the shader)
 }
 
-// reach > 1 so the front clears the top of the frame at uBurn = 1; char = width of the scorched rim (in burn field units);
-// glow / glowFalloff = brightness and tightness of the fiery edge
-export const BURN = { reach: 1.25, char: 0.05, glow: 1.6, glowFalloff: 70 }
-
 export function createComposer(
   renderer: THREE.WebGLRenderer,
   scene: THREE.Scene,
@@ -63,43 +59,7 @@ export function createComposer(
   )
   composer.addPass(new OutputPass())
   composer.addPass(new FXAAPass())
-  const burn = createBurnPass()
-  composer.addPass(burn)
-  return { composer, burn: burn.uniforms.uBurn as { value: number } }
-}
-
-/**
- * Burning paper: the last pass eats the frame away from the bottom up along a noise front, with a charred rim and a
- * glowing orange edge. Burnt pixels become transparent (premultiplied alpha), so the page section behind the canvas
- * shows through. uBurn: 0 = untouched, 1 = fully burnt.
- */
-function createBurnPass() {
-  return new ShaderPass({
-    uniforms: { tDiffuse: { value: null }, uBurn: { value: 0 } },
-    vertexShader:
-      'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    fragmentShader: /* glsl */ `
-      uniform sampler2D tDiffuse; uniform float uBurn; varying vec2 vUv;
-      float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-      float vn(vec2 p) {
-        vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-        return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y);
-      }
-      float fbm(vec2 p) { return vn(p) * 0.5 + vn(p * 2.1 + 7.0) * 0.3 + vn(p * 4.7 + 3.0) * 0.2; }
-      void main() {
-        vec4 c = texture2D(tDiffuse, vUv);
-        if (uBurn <= 0.0) { gl_FragColor = c; return; }
-        // burn order: bottom first, broken up by noise so the front is ragged
-        float field = vUv.y * 0.55 + fbm(vUv * vec2(6.0, 4.0)) * 0.45;
-        float d = field - (uBurn * ${BURN.reach.toFixed(2)} - 0.1);       // < 0 burnt, small > 0 the edge
-        float alpha = smoothstep(-0.004, 0.004, d);
-        float charred = 1.0 - smoothstep(0.0, ${BURN.char.toFixed(3)}, d);   // scorched rim just ahead of the fire
-        float glow = exp(-max(d, 0.0) * ${BURN.glowFalloff.toFixed(1)}) * alpha;
-        vec3 col = mix(c.rgb, vec3(0.16, 0.08, 0.04), charred * 0.85);
-        col += vec3(1.0, 0.46, 0.12) * glow * ${BURN.glow.toFixed(2)};
-        gl_FragColor = vec4(col * alpha, alpha);                       // premultiplied: the page shows through
-      }`,
-  })
+  return composer
 }
 
 /**

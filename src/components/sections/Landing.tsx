@@ -1,44 +1,67 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react'
 import { motion } from 'motion/react'
 import { ArrowDown, Leaf, Sun } from 'lucide-react'
-import { profile } from '../../data/content'
+import { profile, projects } from '../../data/content'
 import { Button } from '../ui/Button'
-import type { LandingScene, Season } from '../../three/landingScene'
+import { ScrambleWords } from '../effects/ScrambleWords'
+import type { LandingScene, RingCard, Season } from '../../three/landingScene'
 
 const ease = [0.22, 1, 0.36, 1] as const
-const TRANSITION_VH = 150 // scroll distance the landing stays pinned while it turns and burns away
+const TRANSITION_VH = 220 // scroll distance the scene stays pinned while it turns from the landing into the showcase
 const smooth = (a: number, b: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
   return t * t * (3 - 2 * t)
 }
+// Scramble cycles through these and settles on the last
+const showcaseWords = ['Brands', 'Interfaces', 'Worlds', 'Visions']
+// Covers on the ring around the character, in the "All" order of the projects section
+const ringCards: RingCard[] = projects.map((p) => ({
+  cover: p.cover,
+  title: p.title,
+  href: p.behance ?? p.live ?? p.medium ?? p.instagram,
+}))
+
+function ShowcaseCopy({ revealed }: { revealed: boolean }) {
+  return (
+    <>
+      <p className="text-xl font-medium tracking-[-0.03em] md:text-[34px]">Trusted to Bring</p>
+      <h2 className="mt-1 text-[38px] leading-[1.05] font-semibold tracking-[-0.045em] md:text-[64px] xl:text-[76px]">
+        Countless <ScrambleWords words={showcaseWords} start={revealed} /> to Life
+      </h2>
+      <div className="pointer-events-auto mt-6 flex flex-col items-center gap-4 sm:flex-row sm:gap-8 md:mt-8">
+        <Button
+          href="#projects"
+          icon={<ArrowDown aria-hidden strokeWidth={1.75} className="size-4" />}
+        >
+          View selected work
+        </Button>
+        <Button href="#insights" variant="text" icon="arrow">
+          Read my articles
+        </Button>
+      </div>
+    </>
+  )
+}
 
 /**
- * 3D landing: Arumbae Neira grass hill with the Chibi character, rendered with three.js behind the intro copy.
- * It sits pinned on top of the next section (`children`, given `revealed` once the burn is halfway): while the user
- * scrolls, the camera circles the character and the frame burns away like paper to uncover that section.
- * Reduced motion: no pin, no transition; the two sections simply follow each other.
+ * Sections 1 and 2 in one pinned three.js scene. Landing: Arumbae Neira grass hill with the Chibi character sitting on it,
+ * behind the intro copy. While the user scrolls, the camera turns around the character and the hill breaks into
+ * particles that re-form as the showcase: the character standing in a ring of project cards, under the section 2 copy.
+ * Reduced motion: no pin and no transition; the landing shows as a still frame, followed by a still of the showcase.
  */
-export function Landing({
-  ready,
-  children,
-}: {
-  ready: boolean
-  children: (revealed: boolean) => ReactNode
-}) {
+export function Landing({ ready }: { ready: boolean }) {
   const trackRef = useRef<HTMLDivElement>(null)
   const sectionRef = useRef<HTMLElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const copyRef = useRef<HTMLDivElement>(null)
   const toggleRef = useRef<HTMLDivElement>(null)
+  const showcaseRef = useRef<HTMLDivElement>(null)
   const [still] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   const [sceneReady, setSceneReady] = useState(false)
-  const [sceneFailed, setSceneFailed] = useState(false)
   const [revealed, setRevealed] = useState(still)
-  const [done, setDone] = useState(false)
+  const [snapshot, setSnapshot] = useState<string>()
   const [season, setSeason] = useState<Season>('autumn') // keep in sync with the scene's starting season
   const sceneRef = useRef<LandingScene>(undefined)
-  const visibleRef = useRef(true),
-    doneRef = useRef(false) // render only while on screen and not yet burnt away
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -51,23 +74,19 @@ export function Landing({
         createLandingScene(canvas, {
           lite: window.matchMedia('(max-width: 767px), (pointer: coarse)').matches,
           still,
+          cards: ringCards,
         }),
       )
       .then((s) => {
         if (disposed) return s.dispose()
         sceneRef.current = s
         setSceneReady(true)
-        // stop rendering while the landing is off screen
-        io = new IntersectionObserver(([e]) => {
-          visibleRef.current = e.isIntersecting
-          s.setActive(e.isIntersecting && !doneRef.current)
-        })
+        if (still) setSnapshot(s.snapshot())
+        // stop rendering while the scene is off screen
+        io = new IntersectionObserver(([e]) => s.setActive(e.isIntersecting))
         io.observe(sectionRef.current!)
       })
-      .catch((err) => {
-        console.error('Landing scene failed to load', err) // the paper background and copy still show
-        setSceneFailed(true)
-      })
+      .catch((err) => console.error('Landing scene failed to load', err)) // the paper background and copy still show
     return () => {
       disposed = true
       io?.disconnect()
@@ -76,8 +95,8 @@ export function Landing({
     }
   }, [still])
 
-  // Scroll progress through the pinned track → camera turn + burn in the scene; copy and toggle fade out first.
-  // Styles are written straight to the DOM so scrolling doesn't re-render React.
+  // Scroll progress through the pinned track drives the scene; the landing copy fades out first, the showcase copy in
+  // last. Styles are written straight to the DOM so scrolling doesn't re-render React.
   useEffect(() => {
     if (still) return
     let frame = 0
@@ -90,23 +109,21 @@ export function Landing({
         Math.max(0, -track.getBoundingClientRect().top / ((TRANSITION_VH / 100) * innerHeight)),
       )
       sceneRef.current?.setProgress(p)
-      const copy = 1 - smooth(0.05, 0.3, p)
+      const out = 1 - smooth(0.04, 0.22, p),
+        inn = smooth(0.8, 0.96, p)
       for (const el of [copyRef.current, toggleRef.current])
         if (el) {
-          el.style.opacity = String(copy)
-          el.style.pointerEvents = copy < 0.05 ? 'none' : ''
+          el.style.opacity = String(out)
+          el.style.visibility = out < 0.02 ? 'hidden' : ''
         }
-      if (copyRef.current) copyRef.current.style.transform = `translateY(${(1 - copy) * -24}px)`
-      // without the scene there is nothing to burn: fade the whole landing instead
-      if (sceneFailed && sectionRef.current)
-        sectionRef.current.style.opacity = String(1 - smooth(0.3, 0.9, p))
-      if (p > 0.45) setRevealed(true)
-      const isDone = p >= 0.999
-      if (isDone !== doneRef.current) {
-        doneRef.current = isDone
-        sceneRef.current?.setActive(visibleRef.current && !isDone)
-        setDone(isDone)
+      if (copyRef.current) copyRef.current.style.transform = `translateY(${(1 - out) * -24}px)`
+      const show = showcaseRef.current
+      if (show) {
+        show.style.opacity = String(inn)
+        show.style.visibility = inn < 0.02 ? 'hidden' : 'visible' // overrides the initial invisible class
+        show.style.transform = `translateY(${(1 - inn) * 24}px)`
       }
+      if (p > 0.85) setRevealed(true)
     }
     const onScroll = () => (frame ||= requestAnimationFrame(update))
     update()
@@ -117,11 +134,32 @@ export function Landing({
       removeEventListener('scroll', onScroll)
       removeEventListener('resize', onScroll)
     }
-  }, [still, sceneFailed, sceneReady])
+  }, [still, sceneReady])
 
   const pickSeason = (next: Season) => {
     setSeason(next)
     sceneRef.current?.setSeason(next)
+  }
+
+  // Project cards on the ring: highlight under the pointer, open the project on click
+  const cardAt = (e: PointerEvent | MouseEvent) => {
+    const canvas = canvasRef.current
+    if (!canvas || !sceneRef.current) return
+    const r = canvas.getBoundingClientRect()
+    return sceneRef.current.pick(
+      ((e.clientX - r.left) / r.width) * 2 - 1,
+      -((e.clientY - r.top) / r.height) * 2 + 1,
+    )
+  }
+  const onPointerMove = (e: PointerEvent<HTMLElement>) => {
+    const card = (e.target as HTMLElement).closest('a, button') ? undefined : cardAt(e)
+    e.currentTarget.style.cursor = card?.href ? 'pointer' : ''
+    e.currentTarget.title = card?.title ?? ''
+  }
+  const onClick = (e: MouseEvent<HTMLElement>) => {
+    if ((e.target as HTMLElement).closest('a, button')) return
+    const href = cardAt(e)?.href
+    if (href) window.open(href, '_blank', 'noopener')
   }
 
   const show = (delay: number) => ({
@@ -134,12 +172,13 @@ export function Landing({
     <section
       ref={sectionRef}
       id="top"
-      // Paper + soft glow until the canvas takes over (it draws the same background, three/post.ts); then transparent,
-      // so burnt pixels uncover the section underneath
-      className={`h-[100svh] min-h-[560px] overflow-hidden ${
-        still ? 'relative' : 'absolute inset-x-0 top-0 z-20'
-      } ${sceneReady ? '' : 'bg-paper bg-[radial-gradient(ellipse_60%_45%_at_50%_72%,#ffffff_0%,transparent_70%)]'}`}
-      style={done ? { visibility: 'hidden' } : undefined}
+      // Paper + soft glow until the canvas takes over (it draws the same background, three/post.ts)
+      className={`h-[100svh] min-h-[560px] overflow-hidden bg-paper bg-[radial-gradient(ellipse_60%_45%_at_50%_72%,#ffffff_0%,transparent_70%)] ${
+        still ? 'relative' : 'sticky top-0'
+      }`}
+      onPointerMove={still ? undefined : onPointerMove}
+      onPointerLeave={still ? undefined : () => sceneRef.current?.pick(9, 9)}
+      onClick={still ? undefined : onClick}
     >
       <canvas
         ref={canvasRef}
@@ -181,6 +220,15 @@ export function Landing({
         </motion.div>
       </div>
 
+      {!still && (
+        <div
+          ref={showcaseRef}
+          className="pointer-events-none invisible absolute inset-x-0 top-0 z-10 flex flex-col items-center px-5 pt-[13svh] text-center opacity-0"
+        >
+          <ShowcaseCopy revealed={revealed} />
+        </div>
+      )}
+
       {sceneReady && (
         <div
           ref={toggleRef}
@@ -216,17 +264,21 @@ export function Landing({
     return (
       <>
         {landing}
-        {children(true)}
+        <section className="relative h-[100svh] min-h-[560px] overflow-hidden bg-paper">
+          {snapshot && (
+            <img src={snapshot} alt="" className="absolute inset-0 size-full object-cover" />
+          )}
+          <div className="pointer-events-none relative z-10 flex flex-col items-center px-5 pt-[13svh] text-center">
+            <ShowcaseCopy revealed />
+          </div>
+        </section>
       </>
     )
 
-  // The next section sits pinned under the landing; the spacer is the scroll distance of the transition
+  // The spacer is the scroll distance of the transition; afterwards the showcase scrolls away with the page
   return (
     <div ref={trackRef} className="relative">
-      <div className="sticky top-0">
-        {children(revealed)}
-        {landing}
-      </div>
+      {landing}
       <div aria-hidden style={{ height: `${TRANSITION_VH}svh` }} />
     </div>
   )
