@@ -38,7 +38,8 @@ export const styleUniforms = {
 /**
  * Summer green → autumn colour. The pick comes from the red/green ratio, which shading doesn't change (it scales all
  * channels together): picking from the raw colour banded blades into stripes along their root→tip gradient.
- * Yellow-greens turn gold, deep greens orange, smoothly, so a crown stays one family with gentle variation.
+ * Ground and grass: yellow-greens turn gold, deep greens orange. Leaves (userData.leaf) go redder: crimson → orange-red.
+ * Both map smoothly, so a crown stays one family with gentle variation.
  * Brightness follows the original so light, shade, backlight and translucency still read.
  */
 // reach = how far the wave travels from the character (m: past the trees and the visible slope, so the sweep stays on screen); band = width of the soft front;
@@ -50,6 +51,12 @@ const AUTUMN_GLSL = /* glsl */ `
     float k = smoothstep(0.55, 1.15, c.r / max(c.g, 0.001));
     vec3 a = mix(vec3(0.93, 0.38, 0.08), vec3(0.97, 0.64, 0.13), k);   // deep green → orange, yellow-green → gold
     return a * (0.4 + l * 1.25);
+  }
+  vec3 autumnizeLeaf(vec3 c) {
+    float l = dot(c, vec3(0.299, 0.587, 0.114));
+    float k = smoothstep(0.45, 0.95, c.r / max(c.g, 0.001));
+    vec3 a = mix(vec3(0.8, 0.17, 0.09), vec3(0.94, 0.4, 0.11), k);   // deep green → crimson, lighter green → orange-red
+    return a * (0.45 + l * 1.35);
   }
   // Season wave: the change spreads out from uSeasonOrigin as uAutumn goes 0 → 1, with a ragged front (per-patch noise).
   // Returns 0 (summer) … 1 (autumn) at this fragment.
@@ -79,14 +86,16 @@ type Shader = THREE.WebGLProgramParametersWithUniforms
 /**
  * Lambert material with the lighting replaced. Requires a single white DirectionalLight at intensity PI,
  * so reflectedLight.directDiffuse.g = dot(normal, light) × shadow (0..1).
- * userData.tint = true multiplies the colour by uFoliageTint and follows the season (ground, grass, leaves).
+ * userData.tint = true multiplies the colour by uFoliageTint and follows the season (ground, grass, leaves);
+ * userData.leaf = true picks the redder leaf palette for autumn.
  */
 export function styledMat(
   params: THREE.MeshLambertMaterialParameters = {},
   extend?: (s: Shader) => void,
 ) {
   const mat = new THREE.MeshLambertMaterial(params)
-  const tint = Boolean(params.userData?.tint)
+  const tint = Boolean(params.userData?.tint),
+    leaf = Boolean(params.userData?.leaf)
   mat.onBeforeCompile = (s) => {
     Object.assign(s.uniforms, styleUniforms)
     if (tint)
@@ -121,7 +130,7 @@ export function styledMat(
           tint
             ? ` * uFoliageTint;
         float sa = seasonAt();
-        base = mix(base, autumnize(base), sa) * (1.0 + sa * (1.0 - sa) * 4.0 * ${SEASON.glow.toFixed(2)})`
+        base = mix(base, ${leaf ? 'autumnizeLeaf' : 'autumnize'}(base), sa) * (1.0 + sa * (1.0 - sa) * 4.0 * ${SEASON.glow.toFixed(2)})`
             : ''
         };
         outgoingLight = mix(base * uShadowColor, base * uLightColor, lit) + totalEmissiveRadiance;`,
@@ -135,7 +144,7 @@ export function styledMat(
         )
     extend?.(s)
   }
-  mat.customProgramCacheKey = () => `style${tint ? '-tint' : ''}`
+  mat.customProgramCacheKey = () => `style${tint ? '-tint' : ''}${leaf ? '-leaf' : ''}`
   return mat
 }
 

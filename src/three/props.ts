@@ -35,11 +35,12 @@ const F = {
 const TREES = {
   leafy: {
     model: 'tree_leafy',
+    // older, deeper greens than the grass so crowns read darker against the slope
     palettes: [
-      [0xbcd140, 4],
-      [0x92b840, 4],
-      [0x6f9f4c, 3],
-      [0xeab634, 3],
+      [0x6e9a38, 4],
+      [0x5b8a36, 4],
+      [0x4a7b3c, 3],
+      [0x86a034, 2],
     ] as [number, number][],
     clumps: [
       [-2.0, 5.5, -0.1, 1.36, 0.85],
@@ -61,10 +62,10 @@ const TREES = {
   nutmeg: {
     model: 'nutmeg',
     palettes: [
-      [0x88b244, 4],
-      [0x70a048, 3],
-      [0x5c9456, 2],
-      [0xc6cf3e, 3],
+      [0x5f8c38, 4],
+      [0x4f7e3a, 3],
+      [0x426f42, 2],
+      [0x7c9636, 2],
     ] as [number, number][],
     clumps: [
       [-2.4, 5.4, 0.7, 1.3, 0.85],
@@ -99,10 +100,10 @@ const TREES = {
 export type TreeKind = keyof typeof TREES
 const BUSH = {
   palettes: [
-    [0xb8cf44, 3],
-    [0x8db444, 4],
-    [0x6a9a50, 3],
-    [0xe6bc3a, 1],
+    [0x8aaa3c, 3],
+    [0x6e9a3e, 4],
+    [0x5a8a46, 3],
+    [0xa8ac3a, 1],
   ] as [number, number][],
   clumps: [
     [0, 0.45, 0, 0.8, 0.8],
@@ -271,7 +272,7 @@ export async function createProps(
       alphaMap: leafTexture(rand),
       alphaTest: F.alphaTest,
       side: THREE.DoubleSide,
-      userData: { tint: true },
+      userData: { tint: true, leaf: true }, // leaf: redder autumn than grass
     },
     (s) => {
       s.vertexShader = s.vertexShader
