@@ -101,7 +101,7 @@ export async function createLandingScene(
     scene.add(
       createFallingLeaves({
         trees: PROPS.trees,
-        count: lite ? 40 : 90,
+        count: lite ? 28 : 60,
         time,
         rand: rng(20261123),
       }),
@@ -164,7 +164,8 @@ export async function createLandingScene(
 
   const timer = new THREE.Timer()
   let active = true
-  let seasonTarget = 0 // uAutumn moves towards this at a steady rate; the wave shape lives in the shader
+  // starts in autumn (matches the toggle default in Landing.tsx); uAutumn moves towards the target at a steady rate
+  let seasonTarget = (styleUniforms.uAutumn.value = 1)
   renderer.setAnimationLoop(
     still
       ? null

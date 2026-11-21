@@ -35,7 +35,7 @@ export function Landing({
   const [sceneFailed, setSceneFailed] = useState(false)
   const [revealed, setRevealed] = useState(still)
   const [done, setDone] = useState(false)
-  const [season, setSeason] = useState<Season>('summer')
+  const [season, setSeason] = useState<Season>('autumn') // keep in sync with the scene's starting season
   const sceneRef = useRef<LandingScene>(undefined)
   const visibleRef = useRef(true),
     doneRef = useRef(false) // render only while on screen and not yet burnt away
