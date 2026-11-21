@@ -349,7 +349,9 @@ export async function createProps(
           /* glsl */ `#include <color_fragment>
       { // long ridges that wander a little, darker where the trunk meets the grass (vBark = trunk-local position, base at y = 0)
         float wander = sin(vBark.y * 2.3) * 1.5 + sin(vBark.y * 7.1 + vBark.x * 3.0) * 0.4;
-        float ridge = sin(vBark.x * 42.0 + vBark.z * 35.0 + wander) * 0.65 + sin(vBark.x * 97.0 - vBark.z * 83.0 + wander * 2.0) * 0.35;
+        float p1 = vBark.x * 42.0 + vBark.z * 35.0 + wander, p2 = vBark.x * 97.0 - vBark.z * 83.0 + wander * 2.0;
+        // fade each layer out once its ridges get narrower than a pixel or two: otherwise they alias into moiré stripes at a distance
+        float ridge = sin(p1) * 0.65 * (1.0 - smoothstep(0.6, 1.6, fwidth(p1))) + sin(p2) * 0.35 * (1.0 - smoothstep(0.6, 1.6, fwidth(p2)));
         ridge = ridge * 0.5 + 0.5;
         diffuseColor.rgb *= mix(${BARK.grooves[0].toFixed(2)}, ${BARK.grooves[1].toFixed(2)}, ridge);
         diffuseColor.rgb *= mix(${BARK.ao.toFixed(2)}, 1.0, smoothstep(0.0, 2.2, vBark.y));
