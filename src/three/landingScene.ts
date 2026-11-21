@@ -166,10 +166,6 @@ export async function createLandingScene(
   )
   // Shaders compile in parallel; objects whose program isn't ready are skipped, so a single (still) frame could miss the grass
   await renderer.compileAsync(scene, camera)
-  if (import.meta.env.DEV)
-    Object.assign(window, {
-      __landing: { camera, scene, resize, styleUniforms, time, render: () => composer.render() },
-    }) // TEMP debug
   composer.render()
 
   return {
