@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { createNature, heightAt, rng } from './nature'
 import { createComposer, paperBackground } from './post'
 import { createProps } from './props'
-import { DAY, styledMat, styleUniforms } from './style'
+import { DAY, SEASON, styledMat, styleUniforms } from './style'
 
 // Landing scene: Arumbae Neira grass and render style on one hill, with the Chibi character sitting on top.
 // Static camera; only wind and the character's sitting idle move.
@@ -48,7 +48,7 @@ export type Season = 'summer' | 'autumn'
 export type LandingScene = {
   dispose: () => void
   setActive: (on: boolean) => void
-  /** Ease the trees, bushes, grass and ground into the given season (instant for reduced motion). */
+  /** Sweep the season over the trees, bushes, grass and ground as a wave from the character (instant for reduced motion). */
   setSeason: (season: Season) => void
 }
 
@@ -86,6 +86,7 @@ export async function createLandingScene(
 
   const time = { value: 0 }
   const seat = SEAT.clone().setY(heightAt(SEAT.x, SEAT.z))
+  styleUniforms.uSeasonOrigin.value.copy(seat) // the season wave spreads out from the character
   scene.add(createNature({ blades: lite ? 30000 : 90000, flowers: lite ? 250 : 600, seat, time }))
   scene.add(await createProps({ ...PROPS, time }, rng(20261122)))
 
@@ -136,7 +137,7 @@ export async function createLandingScene(
 
   const timer = new THREE.Timer()
   let active = true
-  let seasonTarget = 0 // uAutumn eases towards this
+  let seasonTarget = 0 // uAutumn moves towards this at a steady rate; the wave shape lives in the shader
   renderer.setAnimationLoop(
     still
       ? null
@@ -147,7 +148,8 @@ export async function createLandingScene(
           time.value += dt
           mixer.update(dt)
           const autumn = styleUniforms.uAutumn
-          autumn.value += (seasonTarget - autumn.value) * Math.min(1, dt * 2.5) // ≈ 1.5 s to settle
+          const step = dt / SEASON.duration
+          autumn.value += THREE.MathUtils.clamp(seasonTarget - autumn.value, -step, step)
           composer.render()
         },
   )
