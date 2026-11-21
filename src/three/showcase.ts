@@ -6,7 +6,7 @@ import { DISSOLVE_GLSL, styleUniforms } from './style'
 
 export const RING = {
   radius: 11,
-  count: 12, // cards spread evenly over the full circle; the camera stands inside the ring and sees about half
+  count: 20, // cards spread evenly over the full circle, close together (19 projects ≈ a 0.5 m gap); the camera stands inside the ring and sees about half
   size: [3.1, 4.1], // card width, height (m): portrait, covers are cropped to fit
   height: 2.4, // card centre above the character's feet
   corner: 0.06, // corner radius, in card-width units

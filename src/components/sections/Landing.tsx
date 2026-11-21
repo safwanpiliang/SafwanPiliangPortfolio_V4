@@ -26,19 +26,8 @@ function ShowcaseCopy({ revealed }: { revealed: boolean }) {
     <>
       <p className="text-xl font-medium tracking-[-0.03em] md:text-[34px]">Trusted to Bring</p>
       <h2 className="mt-1 text-[38px] leading-[1.05] font-semibold tracking-[-0.045em] md:text-[64px] xl:text-[76px]">
-        Countless <ScrambleWords words={showcaseWords} start={revealed} /> to Life
+        Countless <ScrambleWords words={showcaseWords} start={revealed} reserve={false} /> to Life
       </h2>
-      <div className="pointer-events-auto mt-6 flex flex-col items-center gap-4 sm:flex-row sm:gap-8 md:mt-8">
-        <Button
-          href="#projects"
-          icon={<ArrowDown aria-hidden strokeWidth={1.75} className="size-4" />}
-        >
-          View selected work
-        </Button>
-        <Button href="#insights" variant="text" icon="arrow">
-          Read my articles
-        </Button>
-      </div>
     </>
   )
 }
@@ -223,7 +212,7 @@ export function Landing({ ready }: { ready: boolean }) {
       {!still && (
         <div
           ref={showcaseRef}
-          className="pointer-events-none invisible absolute inset-x-0 top-0 z-10 flex flex-col items-center px-5 pt-[13svh] text-center opacity-0"
+          className="pointer-events-none invisible absolute inset-x-0 top-0 z-10 flex flex-col items-center px-5 pt-[17svh] text-center opacity-0"
         >
           <ShowcaseCopy revealed={revealed} />
         </div>
@@ -268,7 +257,7 @@ export function Landing({ ready }: { ready: boolean }) {
           {snapshot && (
             <img src={snapshot} alt="" className="absolute inset-0 size-full object-cover" />
           )}
-          <div className="pointer-events-none relative z-10 flex flex-col items-center px-5 pt-[13svh] text-center">
+          <div className="pointer-events-none relative z-10 flex flex-col items-center px-5 pt-[17svh] text-center">
             <ShowcaseCopy revealed />
           </div>
         </section>

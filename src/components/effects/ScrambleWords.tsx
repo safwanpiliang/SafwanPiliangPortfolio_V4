@@ -25,6 +25,7 @@ export function ScrambleWords({
   delay = 0,
   hold = 1300,
   duration = 600,
+  reserve = true,
 }: {
   words: string[]
   /** Begins the sequence (e.g. once the hero entrance has played). */
@@ -35,6 +36,8 @@ export function ScrambleWords({
   hold?: number
   /** Length of one scramble. */
   duration?: number
+  /** Hold the widest word's width so nothing after it moves; off for a word mid-line, where it leaves gaps. */
+  reserve?: boolean
 }) {
   const textRef = useRef<HTMLSpanElement>(null)
   const wordsKey = words.join('\n')
@@ -74,9 +77,11 @@ export function ScrambleWords({
     <span className="inline-grid">
       <span className="sr-only">{final}</span>
       {/* Invisible copy of the widest word reserves the width */}
-      <span aria-hidden className="invisible col-start-1 row-start-1">
-        {widest}
-      </span>
+      {reserve && (
+        <span aria-hidden className="invisible col-start-1 row-start-1">
+          {widest}
+        </span>
+      )}
       <span aria-hidden ref={textRef} className="col-start-1 row-start-1">
         {words[0]}
       </span>
