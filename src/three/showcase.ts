@@ -7,7 +7,7 @@ import { DISSOLVE_GLSL, styleUniforms } from './style'
 export const RING = {
   // The ring is centred between the character and the camera, with the camera well behind the centre: the cards wrap
   // around the viewer and the near ones at the sides turn in, so the curve reads clearly
-  radius: 9,
+  radius: 8.1, // 8 cards with a ~0.25 m gap
   offset: 3.5, // ring centre: this far from the character towards the camera's end position
   count: 8,
   size: [6.13, 4.6], // card width, height (m): 4:3 like the covers in Selected Work
