@@ -83,16 +83,16 @@ function softMat(params: THREE.MeshLambertMaterialParameters, group: DissolveGro
 }
 
 /**
- * Static showcase pose, open arms ("ta-da"): arms spread wide and a little low, palms up, chin up. Directions are in the
- * character's own space (+x = its left, +y = up, +z = forward) for its left side and mirrored for the right; the legs and
- * spine keep the first frame of the idle clip.
+ * Static showcase pose, a relaxed welcome: upper arms down and out from the body, elbows bent so the forearms come
+ * forward, open hands palm up, chin slightly up. Directions are in the character's own space (+x = its left, +y = up,
+ * +z = forward) for its left side and mirrored for the right; the legs and spine keep the idle clip's first frame.
  */
 const POSE = {
-  arm: [1, -0.2, 0.06],
-  forearm: [1, -0.16, 0.14],
-  hand: [1, 0.02, 0.2], // wrist bent back a little, so the open hand turns up
+  arm: [1, -0.85, 0.3],
+  forearm: [0.8, -0.25, 0.75],
+  hand: [0.6, 0.1, 0.8], // wrist bent back a little, so the open hand turns up
   palmRoll: -1.5, // rad, roll of the forearm from palm-forward to palm-up (applied mirrored)
-  chinUp: 0.16, // rad
+  chinUp: 0.08, // rad
 }
 
 /** Puts the (already posed by the clip) skeleton of `model` into POSE, by turning bones in world space. */
