@@ -256,7 +256,7 @@ export function Landing({ ready }: { ready: boolean }) {
 
       <div
         ref={copyRef}
-        className="relative z-10 flex flex-col items-center px-5 pt-[14svh] text-center md:pt-[13svh]"
+        className="relative z-10 flex flex-col items-center px-5 pt-[12svh] text-center"
       >
         <motion.span
           {...show(0)}
@@ -266,7 +266,7 @@ export function Landing({ ready }: { ready: boolean }) {
         </motion.span>
         <motion.h1
           {...show(0.1)}
-          className="mt-6 text-[48px] leading-[0.92] font-medium tracking-[-0.055em] md:mt-7 md:text-[90px] xl:text-[110px]"
+          className="mt-[3svh] text-[clamp(46px,min(7vw,12.5svh),110px)] leading-[0.92] font-medium tracking-[-0.055em]"
         >
           Crafting Digital
           <br />
@@ -275,13 +275,13 @@ export function Landing({ ready }: { ready: boolean }) {
         {/* about a fifth of the heading size: well inside the width of “Experiences” */}
         <motion.p
           {...show(0.2)}
-          className="mt-4 text-[11.25px] tracking-[-0.02em] text-mute md:mt-5 md:text-[18px] xl:text-[21.75px]"
+          className="mt-[2svh] text-[clamp(11.25px,min(1.4vw,2.5svh),22px)] tracking-[-0.02em] text-mute"
         >
           across UI, Graphic Design, and 3D
         </motion.p>
         <motion.div
           {...show(0.3)}
-          className="mt-6 flex flex-col items-center gap-4 sm:flex-row sm:gap-8 md:mt-8"
+          className="mt-[3.5svh] flex flex-col items-center gap-4 sm:flex-row sm:gap-8"
         >
           <Button
             href="#projects"

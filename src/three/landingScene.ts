@@ -47,7 +47,7 @@ const PROPS = {
 // at the end is fixed so the ring fills the width on any screen. Phases are ranges of scroll progress (0..1).
 const SHOWCASE = {
   turn: Math.PI,
-  start: { height: 5.0, aim: 3.6 }, // camera height and aim height above the seat
+  start: { height: 5.0, aim: 4.3 }, // camera height and aim height above the seat (high aim: the character sits low, under the copy)
   // close-up on the character as the particles form it (still sitting on the ground), reached at progress `at`; the
   // camera then pulls back to `end` while the cards fly in and the ring turns
   close: { dist: 6.5, height: 2.6, aim: 1.6, fov: 34, at: 0.45, overlap: 0.3 },
@@ -470,7 +470,7 @@ export async function createLandingScene(
   // grass. Compile with everything visible so the showcase and particles are ready too.
   landing.visible = showcase.visible = morph.points.visible = true
   await renderer.compileAsync(scene, camera)
-  apply()
+  if (import.meta.env.DEV) apply()
   composer.render()
 
   return {
