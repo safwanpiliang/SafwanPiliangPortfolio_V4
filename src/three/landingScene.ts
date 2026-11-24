@@ -58,7 +58,7 @@ const SHOWCASE = {
   dissolveB: [0.34, 0.46], // the character forms
   // the cards run in like a train along the ring, left to right: over this range the ring turns `spin` and slows to a
   // stop, and each card appears (growing in over `grow` rad) once it has come round past the point behind the camera
-  cards: [0.42, 1],
+  cards: [0.34, 1],
   spin: Math.PI * 2,
   grow: 0.6,
   points: { count: 16000, lite: 6500, size: 0.075 },
@@ -352,7 +352,7 @@ export async function createLandingScene(
     camera.position.copy(seat).add(offset)
     camera.lookAt(aim.copy(seat).setY(seat.y + via(S.start.aim, S.close.aim, S.end.aim)))
 
-    introSpin = S.spin * (1 - ss(progress, S.cards[0], S.cards[1])) ** 3
+    introSpin = S.spin * (1 - ss(progress, S.cards[0], S.cards[1])) ** 2 // gentle ease-out: the train doesn't rush in
     ring.group.rotation.y = ringRot + introSpin
     const c = ring.group.position,
       gate = Math.atan2(camera.position.x - c.x, camera.position.z - c.z) // behind the camera, seen from the ring centre
