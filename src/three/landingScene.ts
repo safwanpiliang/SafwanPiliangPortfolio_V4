@@ -79,7 +79,14 @@ const PAL = {
   character: '#f2f1ee',
 }
 
-/** Character material with softer shadows than the rest (Arumbae softMat): shadow colour pulled towards white, wider falloff. */
+// Gloss on the character, like the Principled BSDF (roughness 0.5) it has in Blender: a soft studio reflection, brighter
+// from above and towards the silhouette, and a sun highlight. Without it a dark fur reads as flat black.
+const GLOSS = { env: [0.03, 0.16], fresnel: 0.65, spec: 0.35, shininess: 24 }
+
+/**
+ * Character material with softer shadows than the rest (Arumbae softMat): shadow colour pulled towards white, wider
+ * falloff; plus GLOSS.
+ */
 function softMat(params: THREE.MeshLambertMaterialParameters, group: DissolveGroup) {
   const mat = styledMat({ ...params, userData: { group } }, (s) => {
     const lit = 'float lit = smoothstep(uShade.x, uShade.y,',
@@ -89,6 +96,21 @@ function softMat(params: THREE.MeshLambertMaterialParameters, group: DissolveGro
     s.fragmentShader = s.fragmentShader
       .replace(lit, 'float lit = smoothstep(uShade.x - 0.25, uShade.y + 0.40,')
       .replace(shade, 'outgoingLight = mix(base * mix(uShadowColor, vec3(1.0), 0.60),')
+      .replace(
+        '#include <opaque_fragment>',
+        /* glsl */ `{
+          vec3 V = normalize(vViewPosition), N = normalize(normal);
+          vec3 L = normalize((viewMatrix * vec4(uSunDir, 0.0)).xyz), H = normalize(L + V);
+          float up = normalize((vec4(N, 0.0) * viewMatrix).xyz).y;   // world-space normal, from the view-space one
+          float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
+          vec3 env = mix(vec3(${GLOSS.env[0]}), vec3(${GLOSS.env[1]}), smoothstep(-0.4, 0.9, up));
+          env *= ${(1 - GLOSS.fresnel).toFixed(2)} + ${GLOSS.fresnel.toFixed(2)} * fres;
+          float spec = pow(max(dot(N, H), 0.0), ${GLOSS.shininess.toFixed(1)}) * ${GLOSS.spec.toFixed(2)} * lit;
+          outgoingLight += (env + spec * uLightColor) * (1.0 - dsRim);
+        }
+        #include <opaque_fragment>`,
+      )
+    s.fragmentShader = 'uniform vec3 uSunDir;\n' + s.fragmentShader
   })
   mat.customProgramCacheKey = () => `style-soft-character-${group}`
   return mat
