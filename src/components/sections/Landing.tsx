@@ -229,8 +229,8 @@ export function Landing({ ready }: { ready: boolean }) {
     <section
       ref={sectionRef}
       id="top"
-      // Paper + soft glow until the canvas takes over (it draws the same background, three/post.ts)
-      className={`relative h-[100svh] min-h-[560px] overflow-hidden bg-paper bg-[radial-gradient(ellipse_60%_45%_at_50%_72%,#ffffff_0%,transparent_70%)]`}
+      // Paper until the canvas takes over (it draws the same colour, three/post.ts)
+      className={`relative h-[100svh] min-h-[560px] overflow-hidden bg-paper`}
       onPointerMove={still ? undefined : onPointerMove}
       onPointerLeave={still ? undefined : () => sceneRef.current?.pick(9, 9)}
       onClick={still ? undefined : onClick}

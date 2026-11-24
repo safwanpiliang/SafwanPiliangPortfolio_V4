@@ -47,7 +47,7 @@ const PROPS = {
 const SHOWCASE = {
   turn: Math.PI,
   start: { height: 5.0, aim: 3.6 }, // camera height and aim height above the seat
-  end: { dist: 9.5, height: 3.4, aim: 4.3, hfov: 84 }, // aim above the head: the ring sits low, under the copy
+  end: { dist: 9.5, height: 3.4, aim: 3.7, hfov: 84 }, // aim near the head: the ring sits under the copy, the feet and their shadow stay in frame
   dissolveA: [0.04, 0.3], // landing breaks up
   show: [0.04, 0.2, 0.62, 0.82], // particles fade in, then out
   morph: [0.2, 0.68], // particles travel from landing to showcase
@@ -189,6 +189,34 @@ export async function createLandingScene(
   standing.model.rotation.y = SHOWCASE.turn // faces the camera once it has come round
   standing.model.updateMatrixWorld(true)
   showcase.add(standing.model)
+  // Soft contact shadow under the standing character (the showcase has no ground to catch the sun's shadow)
+  const blob = (() => {
+    const cv = document.createElement('canvas')
+    cv.width = cv.height = 128
+    const ctx = cv.getContext('2d')!
+    const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
+    g.addColorStop(0, 'rgba(255,255,255,1)')
+    g.addColorStop(0.45, 'rgba(255,255,255,0.55)')
+    g.addColorStop(1, 'rgba(255,255,255,0)')
+    ctx.fillStyle = g
+    ctx.fillRect(0, 0, 128, 128)
+    const mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({
+        color: 0x2a2d3a,
+        map: new THREE.CanvasTexture(cv), // white with a soft alpha falloff, tinted by color
+        transparent: true,
+        depthWrite: false,
+        fog: false,
+      }),
+    )
+    mesh.rotation.x = -Math.PI / 2
+    mesh.scale.set(3.4, 2.2, 1) // wider than deep, like the feet apart
+    mesh.position.set(seat.x, seat.y + 0.02, seat.z)
+    mesh.renderOrder = -1
+    return mesh
+  })()
+  showcase.add(blob)
 
   const ring = createRing(cards)
   ring.group.position
@@ -315,6 +343,7 @@ export async function createLandingScene(
     morph.uniforms.uShow.value = show
     morph.uniforms.uMorph.value = ss(progress, S.morph[0], S.morph[1])
     morph.points.visible = show > 0.001
+    ;(blob.material as THREE.MeshBasicMaterial).opacity = 0.45 * (1 - dB)
     // particle size in px per metre at distance 1
     morph.uniforms.uPx.value =
       (S.points.size * renderer.getDrawingBufferSize(tmpSize).y) /

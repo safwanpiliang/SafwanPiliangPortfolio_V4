@@ -63,26 +63,16 @@ export function createComposer(
 }
 
 /**
- * Page paper colour with a faint bright glow behind the hill, drawn as the scene background:
- * bloom needs an opaque canvas, so the CSS background can't show through any more.
+ * Scene background that comes out of the post chain as exactly the page's paper colour (--color-paper), so the canvas
+ * meets the sections below without a seam: the grading pass's saturation and exposure are undone in advance (its split
+ * toning is neutral this bright, and the colour sits under the bloom threshold).
  */
-export function paperBackground() {
-  const cv = document.createElement('canvas'),
-    w = 512,
-    h = 512,
-    ctx = cv.getContext('2d')!
-  cv.width = w
-  cv.height = h
-  ctx.fillStyle = '#fafaf8'
-  ctx.fillRect(0, 0, w, h)
-  ctx.translate(w / 2, h * 0.72)
-  ctx.scale(1, 0.75)
-  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, w * 0.42)
-  g.addColorStop(0, '#ffffff') // faint brightening behind the hill, no colour cast
-  g.addColorStop(1, 'rgba(250, 250, 248, 0)')
-  ctx.fillStyle = g
-  ctx.fillRect(-w, -h, w * 2, h * 2)
-  const tex = new THREE.CanvasTexture(cv)
-  tex.colorSpace = THREE.SRGBColorSpace
-  return tex
+export function paperBackground(paper = '#fafaf8') {
+  const c = new THREE.Color(paper) // linear
+  const l = c.r * 0.2126 + c.g * 0.7152 + c.b * 0.0722
+  return new THREE.Color(
+    (l + (c.r - l) / GRADE.saturation) / GRADE.exposure,
+    (l + (c.g - l) / GRADE.saturation) / GRADE.exposure,
+    (l + (c.b - l) / GRADE.saturation) / GRADE.exposure,
+  )
 }
