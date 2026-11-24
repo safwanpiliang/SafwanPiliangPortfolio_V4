@@ -82,6 +82,67 @@ function softMat(params: THREE.MeshLambertMaterialParameters, group: DissolveGro
   return mat
 }
 
+/**
+ * Static showcase pose, open arms ("ta-da"): arms spread wide and a little low, palms up, chin up. Directions are in the
+ * character's own space (+x = its left, +y = up, +z = forward) for its left side and mirrored for the right; the legs and
+ * spine keep the first frame of the idle clip.
+ */
+const POSE = {
+  arm: [1, -0.2, 0.06],
+  forearm: [1, -0.16, 0.14],
+  hand: [1, 0.02, 0.2], // wrist bent back a little, so the open hand turns up
+  palmRoll: -1.5, // rad, roll of the forearm from palm-forward to palm-up (applied mirrored)
+  chinUp: 0.16, // rad
+}
+
+/** Puts the (already posed by the clip) skeleton of `model` into POSE, by turning bones in world space. */
+function strikePose(model: THREE.Object3D) {
+  const bone = (name: string) => model.getObjectByName(`mixamorig${name}`)!
+  const rot = new THREE.Quaternion(),
+    wq = new THREE.Quaternion(),
+    pq = new THREE.Quaternion(),
+    a = new THREE.Vector3(),
+    b = new THREE.Vector3()
+  model.updateMatrixWorld(true)
+  const modelQ = model.getWorldQuaternion(new THREE.Quaternion())
+  const turn = (o: THREE.Object3D, r: THREE.Quaternion) => {
+    o.getWorldQuaternion(wq)
+    o.parent!.getWorldQuaternion(pq)
+    o.quaternion.copy(pq.invert().multiply(r).multiply(wq))
+    o.updateMatrixWorld(true)
+  }
+  const along = (o: THREE.Object3D, child: THREE.Object3D) =>
+    child.getWorldPosition(b).sub(o.getWorldPosition(a)).normalize()
+  const aim = (o: THREE.Object3D, child: THREE.Object3D, dir: number[]) =>
+    turn(
+      o,
+      rot.setFromUnitVectors(
+        along(o, child),
+        new THREE.Vector3(...dir).normalize().applyQuaternion(modelQ),
+      ),
+    )
+  for (const [side, s] of [
+    ['Left', 1],
+    ['Right', -1],
+  ] as const) {
+    const m = (v: number[]) => [v[0] * s, v[1], v[2]]
+    aim(bone(`${side}Arm`), bone(`${side}ForeArm`), m(POSE.arm))
+    aim(bone(`${side}ForeArm`), bone(`${side}Hand`), m(POSE.forearm))
+    turn(
+      bone(`${side}ForeArm`),
+      rot.setFromAxisAngle(
+        along(bone(`${side}ForeArm`), bone(`${side}Hand`)).clone(),
+        POSE.palmRoll * s,
+      ),
+    )
+    aim(bone(`${side}Hand`), bone(`${side}HandIndex1`), m(POSE.hand))
+  }
+  turn(
+    bone('Head'),
+    rot.setFromAxisAngle(new THREE.Vector3(1, 0, 0).applyQuaternion(modelQ), -POSE.chinUp),
+  )
+}
+
 export type Season = 'summer' | 'autumn'
 export type { RingCard }
 export type LandingScene = {
@@ -187,6 +248,7 @@ export async function createLandingScene(
   landing.add(sitting.model)
   const standing = character(idle.animations[0], 'b')
   standing.model.rotation.y = SHOWCASE.turn // faces the camera once it has come round
+  strikePose(standing.model) // held still: the idle clip only provides the stance
   standing.model.updateMatrixWorld(true)
   showcase.add(standing.model)
   // Soft contact shadow under the standing character (the showcase has no ground to catch the sun's shadow)
@@ -388,7 +450,6 @@ export async function createLandingScene(
           time.value += dt
           morph.uniforms.uTime.value = time.value
           if (landing.visible) sitting.mixer.update(dt)
-          if (showcase.visible) standing.mixer.update(dt)
           const autumn = styleUniforms.uAutumn
           const step = dt / SEASON.duration
           autumn.value += THREE.MathUtils.clamp(seasonTarget - autumn.value, -step, step)
