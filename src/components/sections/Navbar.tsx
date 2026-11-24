@@ -10,6 +10,13 @@ export function Navbar({ ready }: { ready: boolean }) {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState<string | null>(null)
+  // #top holds two views (landing, then the showcase after the transition); Landing reports which one is showing
+  const [view, setView] = useState('landing')
+  useEffect(() => {
+    const onView = (e: Event) => setView((e as CustomEvent<string>).detail)
+    addEventListener('landing-view', onView)
+    return () => removeEventListener('landing-view', onView)
+  }, [])
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24)
@@ -20,7 +27,11 @@ export function Navbar({ ready }: { ready: boolean }) {
 
   // Highlight the section currently in view
   useEffect(() => {
-    const ids = navLinks.map((l) => l.href.slice(1))
+    const ids = [
+      ...new Set(
+        navLinks.map((l) => l.href.slice(1)).map((id) => (id === 'showcase' ? 'top' : id)),
+      ),
+    ]
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
@@ -67,7 +78,11 @@ export function Navbar({ ready }: { ready: boolean }) {
 
         <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
           {navLinks.map((link) => {
-            const isActive = active === link.href.slice(1)
+            const id = link.href.slice(1)
+            const isActive =
+              id === 'top' || id === 'showcase'
+                ? active === 'top' && (id === 'showcase') === (view === 'showcase')
+                : active === id
             return (
               <a
                 key={link.href}

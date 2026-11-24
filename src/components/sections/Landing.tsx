@@ -106,6 +106,7 @@ export function Landing({ ready }: { ready: boolean }) {
       to = p,
       t0 = 0,
       raf = 0
+    let shown = ''
     const apply = (v: number) => {
       sceneRef.current?.setProgress(v)
       const out = 1 - smooth(0.02, 0.2, v),
@@ -123,6 +124,11 @@ export function Landing({ ready }: { ready: boolean }) {
         show.style.transform = `translateY(${(1 - inn) * 24}px)`
       }
       if (v > 0.8) setRevealed(true)
+      const view = v > 0.5 ? 'showcase' : 'landing'
+      if (view !== shown) {
+        shown = view
+        dispatchEvent(new CustomEvent('landing-view', { detail: view })) // Navbar: Home vs Services
+      }
     }
     const tick = (now: number) => {
       const k = Math.min(1, (now - t0) / TRANSITION_MS)
@@ -203,8 +209,32 @@ export function Landing({ ready }: { ready: boolean }) {
       }
       intent(e, down ? 1 : -1)
     }
+    // Nav links to the two views of this section: Home / logo (#top) → landing, Services (#showcase) → showcase.
+    // Scroll to the top if needed, then play the transition towards the view asked for.
+    let bound: number | null = null
+    const go = (target: number) => {
+      if (to !== target && !raf) play(target)
+    }
+    const onNav = (e: MouseEvent) => {
+      const link = (e.target as HTMLElement).closest<HTMLAnchorElement>(
+        'a[href="#top"], a[href="#showcase"]',
+      )
+      if (!link) return
+      e.preventDefault()
+      const target = link.getAttribute('href') === '#showcase' ? 1 : 0
+      history.replaceState(null, '', link.getAttribute('href'))
+      if (scrollY > 1) {
+        bound = target
+        scrollTo({ top: 0, behavior: 'smooth' })
+      } else go(target)
+    }
     const onScroll = () => {
       noteArrival()
+      if (scrollY <= 1 && bound !== null) {
+        parked = false
+        go(bound)
+        bound = null
+      }
       if (scrollY <= 1 || to === 1) return
       // a small scroll that slipped through still plays the transition; a far jump (anchor, scrollbar) skips to the end
       if (scrollY < innerHeight / 2) return raf || play(1)
@@ -220,6 +250,7 @@ export function Landing({ ready }: { ready: boolean }) {
     addEventListener('touchmove', onTouchMove, opts)
     addEventListener('keydown', onKey)
     addEventListener('scroll', onScroll, { passive: true })
+    addEventListener('click', onNav)
     return () => {
       cancelAnimationFrame(raf)
       removeEventListener('wheel', onWheel)
@@ -227,6 +258,7 @@ export function Landing({ ready }: { ready: boolean }) {
       removeEventListener('touchmove', onTouchMove)
       removeEventListener('keydown', onKey)
       removeEventListener('scroll', onScroll)
+      removeEventListener('click', onNav)
     }
   }, [still, sceneReady])
 
@@ -339,7 +371,10 @@ export function Landing({ ready }: { ready: boolean }) {
     return (
       <>
         {landing}
-        <section className="relative h-[100svh] min-h-[560px] overflow-hidden bg-paper">
+        <section
+          id="showcase"
+          className="relative h-[100svh] min-h-[560px] overflow-hidden bg-paper"
+        >
           {snapshot && (
             <img src={snapshot} alt="" className="absolute inset-0 size-full object-cover" />
           )}

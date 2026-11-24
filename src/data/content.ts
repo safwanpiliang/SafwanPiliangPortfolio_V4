@@ -24,7 +24,8 @@ export const socials = [
 ]
 
 export const navLinks = [
-  { label: 'Services', href: '#services' },
+  { label: 'Home', href: '#top' },
+  { label: 'Services', href: '#showcase' }, // section 2: the character and the ring of project cards
   { label: 'Projects', href: '#projects' },
   { label: 'Insights', href: '#insights' },
   { label: 'About', href: '#about' },
