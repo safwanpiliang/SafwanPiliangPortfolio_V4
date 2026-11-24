@@ -223,7 +223,7 @@ export async function createLandingScene(
     const ctx = cv.getContext('2d')!
     const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
     g.addColorStop(0, 'rgba(255,255,255,1)')
-    g.addColorStop(0.45, 'rgba(255,255,255,0.55)')
+    g.addColorStop(0.35, 'rgba(255,255,255,0.6)')
     g.addColorStop(1, 'rgba(255,255,255,0)')
     ctx.fillStyle = g
     ctx.fillRect(0, 0, 128, 128)
@@ -238,12 +238,38 @@ export async function createLandingScene(
       }),
     )
     mesh.rotation.x = -Math.PI / 2
-    mesh.scale.set(3.4, 2.2, 1) // wider than deep, like the feet apart
+    mesh.scale.set(2.6, 1.7, 1) // wider than deep, like the feet apart
     mesh.position.set(seat.x, seat.y + 0.02, seat.z)
     mesh.renderOrder = -1
     return mesh
   })()
   showcase.add(blob)
+  // The shadow follows the feet as the character stands up and idles (the clip moves them off the seat): it tracks the
+  // toe bones, less `sole`, the height of the toe bones above the bottom of the feet, measured in the final pose
+  const toes = ['Left', 'Right'].map(
+    (side) => standing.model.getObjectByName(`mixamorig${side}ToeBase`)!,
+  )
+  const toeA = new THREE.Vector3(),
+    toeB = new THREE.Vector3()
+  const keepTime = standAction.time
+  standAction.time = standUp.animations[0].duration
+  standing.mixer.update(0)
+  standing.model.updateMatrixWorld(true)
+  const sole =
+    toes[0].getWorldPosition(toeA).y - new THREE.Box3().setFromObject(standing.model, true).min.y
+  standAction.time = keepTime
+  standing.mixer.update(0)
+  function placeShadow() {
+    standing.model.updateMatrixWorld(true)
+    toes[0].getWorldPosition(toeA)
+    toes[1].getWorldPosition(toeB)
+    blob.position.set(
+      (toeA.x + toeB.x) / 2,
+      Math.min(toeA.y, toeB.y) - sole + 0.02,
+      (toeA.z + toeB.z) / 2,
+    )
+  }
+  placeShadow()
 
   const ring = createRing(cards)
   ring.group.position
@@ -433,7 +459,10 @@ export async function createLandingScene(
             standAction.reset().setEffectiveWeight(1).paused = true
             standing.mixer.update(0)
           }
-          if (showcase.visible) standing.mixer.update(dt)
+          if (showcase.visible) {
+            standing.mixer.update(dt)
+            placeShadow()
+          }
           // the ring idles round once it has formed, and holds still under the pointer
           if (progress > 0.99 && !hovered) ringRot += dt * RING.spin
           ring.group.rotation.y = ringRot + introSpin
