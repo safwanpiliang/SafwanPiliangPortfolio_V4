@@ -56,9 +56,11 @@ const SHOWCASE = {
   show: [0.03, 0.14, 0.36, 0.48], // particles fade in, then out
   morph: [0.12, 0.4], // particles travel from the landing onto the character
   dissolveB: [0.34, 0.46], // the character forms
-  cards: [0.5, 0.94, 0.26], // cards fly in one after another over this range; each takes the last value
-  fly: { out: 2.5, up: 3 }, // where a card starts: this many ring radii further out, and this high above (m)
-  spin: Math.PI, // extra half turn of the ring during the pull-back, slowing to a stop
+  // the cards run in like a train along the ring, left to right: over this range the ring turns `spin` and slows to a
+  // stop, and each card appears (growing in over `grow` rad) once it has come round past the point behind the camera
+  cards: [0.42, 1],
+  spin: Math.PI * 2,
+  grow: 0.6,
   points: { count: 16000, lite: 6500, size: 0.075 },
 }
 // sRGB palettes for landing particles: summer / autumn (they follow the season toggle)
@@ -249,7 +251,6 @@ export async function createLandingScene(
     .multiplyScalar(RING.offset)
     .add(seat)
   ring.group.updateMatrixWorld(true)
-  for (const m of ring.meshes) m.userData.home = m.position.clone()
   showcase.add(ring.group)
 
   // Particles: sample the landing surfaces (a) and the showcase (b)
@@ -351,19 +352,20 @@ export async function createLandingScene(
     camera.position.copy(seat).add(offset)
     camera.lookAt(aim.copy(seat).setY(seat.y + via(S.start.aim, S.close.aim, S.end.aim)))
 
-    // cards fly in from further out and above, one after another, while the ring turns its extra half turn
-    const [c0, c1, each] = S.cards,
-      step = (c1 - c0 - each) / Math.max(1, ring.meshes.length - 1)
-    ring.meshes.forEach((m, k) => {
-      const e = 1 - (1 - ss(progress, c0 + k * step, c0 + k * step + each)) ** 3
-      const home = m.userData.home as THREE.Vector3
-      m.userData.flown = e > 0
-      m.visible = e > 0 && (m.material as THREE.ShaderMaterial).userData.ready === true
-      m.position.copy(home).multiplyScalar(1 + S.fly.out * (1 - e))
-      m.position.y = home.y + S.fly.up * (1 - e)
-    })
-    introSpin = S.spin * (1 - t2) ** 3
+    introSpin = S.spin * (1 - ss(progress, S.cards[0], S.cards[1])) ** 3
     ring.group.rotation.y = ringRot + introSpin
+    const c = ring.group.position,
+      gate = Math.atan2(camera.position.x - c.x, camera.position.z - c.z) // behind the camera, seen from the ring centre
+    ring.meshes.forEach((m) => {
+      const final = (m.userData.angle as number) + ringRot
+      // how far the ring still turns after this card passes the gate (the ring turns towards smaller angles)
+      const atGate = THREE.MathUtils.euclideanModulo(gate - final, Math.PI * 2)
+      // once the ring has stopped every card is full size (one resting behind the camera comes round later)
+      const grow = introSpin > 0 ? THREE.MathUtils.clamp((atGate - introSpin) / S.grow, 0, 1) : 1
+      m.userData.flown = grow > 0
+      m.visible = grow > 0 && (m.material as THREE.ShaderMaterial).userData.ready === true
+      m.scale.setScalar(grow)
+    })
 
     const dA = ss(progress, S.dissolveA[0], S.dissolveA[1]),
       dB = 1 - ss(progress, S.dissolveB[0], S.dissolveB[1]),
