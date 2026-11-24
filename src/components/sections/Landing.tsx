@@ -145,25 +145,66 @@ export function Landing({ ready }: { ready: boolean }) {
         play(dir > 0 ? 1 : 0)
       }
     }
+    // Coming back up from the sections below, the scroll that reaches the top (and its trackpad momentum) only parks
+    // the page there; going back to the landing takes a separate, second scroll up
+    let parked = false,
+      arrivedAt = 0,
+      lastY = scrollY,
+      lastWheel = 0,
+      touchStartedAt = 0
+    const NEW_GESTURE_MS = 250 // a pause this long between wheel events starts a new gesture
+    // checked from the input handlers too: the scroll event for reaching the top can come after the next wheel event
+    const noteArrival = () => {
+      const fromBelow = lastY > 1
+      lastY = scrollY
+      if (scrollY > 1) return (parked = false)
+      if (fromBelow && to === 1) {
+        parked = true
+        arrivedAt = performance.now()
+      }
+    }
     const onWheel = (e: WheelEvent) => {
-      if (raf) e.preventDefault()
-      else if (e.deltaY) intent(e, Math.sign(e.deltaY)) // even a tiny trackpad nudge, or it would scroll past
+      const now = performance.now(),
+        gap = now - lastWheel
+      lastWheel = now
+      noteArrival()
+      if (raf) return e.preventDefault()
+      if (parked && e.deltaY < 0) {
+        if (gap < NEW_GESTURE_MS) return // still the gesture that brought the page up here
+        parked = false
+      }
+      if (e.deltaY) intent(e, Math.sign(e.deltaY)) // even a tiny trackpad nudge, or it would scroll past
     }
     let touchY = 0
-    const onTouchStart = (e: TouchEvent) => (touchY = e.touches[0].clientY)
+    const onTouchStart = (e: TouchEvent) => {
+      touchY = e.touches[0].clientY
+      touchStartedAt = performance.now()
+    }
     const onTouchMove = (e: TouchEvent) => {
       const dy = touchY - e.touches[0].clientY
-      if (raf) e.preventDefault()
-      else if (Math.abs(dy) > 10) intent(e, Math.sign(dy))
+      noteArrival()
+      if (raf) return e.preventDefault()
+      if (parked && dy < 0) {
+        if (touchStartedAt < arrivedAt) return // the swipe that brought the page up here
+        parked = false
+      }
+      if (Math.abs(dy) > 10) intent(e, Math.sign(dy))
       else if (dy > 0 && to === 0 && scrollY <= 1 && e.cancelable) e.preventDefault() // don't let the page creep
     }
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest('input, textarea, select, [contenteditable]')) return
       const down = ['ArrowDown', 'PageDown'].includes(e.key) || (e.key === ' ' && !e.shiftKey)
       const up = ['ArrowUp', 'PageUp'].includes(e.key) || (e.key === ' ' && e.shiftKey)
-      if (down || up) intent(e, down ? 1 : -1)
+      if (!down && !up) return
+      noteArrival()
+      if (parked && up) {
+        if (e.repeat) return // the key held down to get up here
+        parked = false
+      }
+      intent(e, down ? 1 : -1)
     }
     const onScroll = () => {
+      noteArrival()
       if (scrollY <= 1 || to === 1) return
       // a small scroll that slipped through still plays the transition; a far jump (anchor, scrollbar) skips to the end
       if (scrollY < innerHeight / 2) return raf || play(1)
