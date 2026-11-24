@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'motion/react'
 import { ArrowDown, Leaf, Sun } from 'lucide-react'
 import { projects } from '../../data/content'
@@ -30,11 +30,7 @@ const ringIds = [
 const ringCards: RingCard[] = ringIds.flatMap((id) =>
   projects
     .filter((p) => p.cover.endsWith(`/${id}.webp`))
-    .map((p) => ({
-      cover: p.cover,
-      title: p.title,
-      href: p.behance ?? p.live ?? p.medium ?? p.instagram,
-    })),
+    .map((p) => ({ cover: p.cover, title: p.title })),
 )
 
 function ShowcaseCopy({ revealed }: { revealed: boolean }) {
@@ -198,27 +194,6 @@ export function Landing({ ready }: { ready: boolean }) {
     sceneRef.current?.setSeason(next)
   }
 
-  // Project cards on the ring: highlight under the pointer, open the project on click
-  const cardAt = (e: PointerEvent | MouseEvent) => {
-    const canvas = canvasRef.current
-    if (!canvas || !sceneRef.current) return
-    const r = canvas.getBoundingClientRect()
-    return sceneRef.current.pick(
-      ((e.clientX - r.left) / r.width) * 2 - 1,
-      -((e.clientY - r.top) / r.height) * 2 + 1,
-    )
-  }
-  const onPointerMove = (e: PointerEvent<HTMLElement>) => {
-    const card = (e.target as HTMLElement).closest('a, button') ? undefined : cardAt(e)
-    e.currentTarget.style.cursor = card?.href ? 'pointer' : ''
-    e.currentTarget.title = card?.title ?? ''
-  }
-  const onClick = (e: MouseEvent<HTMLElement>) => {
-    if ((e.target as HTMLElement).closest('a, button')) return
-    const href = cardAt(e)?.href
-    if (href) window.open(href, '_blank', 'noopener')
-  }
-
   const show = (delay: number) => ({
     initial: { opacity: 0, y: 20 },
     animate: ready ? { opacity: 1, y: 0 } : undefined,
@@ -231,9 +206,6 @@ export function Landing({ ready }: { ready: boolean }) {
       id="top"
       // Paper until the canvas takes over (it draws the same colour, three/post.ts)
       className={`relative h-[100svh] min-h-[560px] overflow-hidden bg-paper`}
-      onPointerMove={still ? undefined : onPointerMove}
-      onPointerLeave={still ? undefined : () => sceneRef.current?.pick(9, 9)}
-      onClick={still ? undefined : onClick}
     >
       <canvas
         ref={canvasRef}

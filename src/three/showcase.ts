@@ -16,7 +16,7 @@ export const RING = {
   spin: 0.04, // idle turn of the ring (rad/s) once the transition is over
 }
 
-export type RingCard = { cover: string; href?: string; title: string }
+export type RingCard = { cover: string; title: string }
 
 /** Ring of cover cards facing the centre. They dissolve in with uDissolveB, like the showcase character. */
 export function createRing(cards: RingCard[]) {

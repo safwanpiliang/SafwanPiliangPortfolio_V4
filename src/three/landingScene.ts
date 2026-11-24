@@ -103,8 +103,6 @@ export type LandingScene = {
   setProgress: (p: number) => void
   /** Sweep the season over the trees, bushes, grass and ground as a wave from the character (instant for reduced motion). */
   setSeason: (season: Season) => void
-  /** Card under the pointer (normalised device coords), for clicks; undefined off the cards or before the ring is formed. */
-  pick: (x: number, y: number) => RingCard | undefined
   /** Reduced motion: a still image of the finished showcase (the canvas keeps showing the landing). */
   snapshot: () => string
 }
@@ -429,10 +427,6 @@ export async function createLandingScene(
   })
   ro.observe(canvas)
 
-  const raycaster = new THREE.Raycaster(),
-    ndc = new THREE.Vector2()
-  const formed = () => progress > 0.98 // cards in place
-
   const timer = new THREE.Timer()
   let active = true
   // starts in autumn (matches the toggle default in Landing.tsx); uAutumn moves towards the target at a steady rate
@@ -490,11 +484,6 @@ export async function createLandingScene(
         styleUniforms.uAutumn.value = seasonTarget
         composer.render()
       }
-    },
-    pick(x, y) {
-      if (!formed()) return undefined
-      raycaster.setFromCamera(ndc.set(x, y), camera)
-      return raycaster.intersectObjects(ring.meshes, false)[0]?.object.userData.card
     },
     snapshot() {
       const keep = progress
