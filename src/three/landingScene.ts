@@ -50,7 +50,7 @@ const SHOWCASE = {
   start: { height: 5.0, aim: 3.6 }, // camera height and aim height above the seat
   // close-up on the character as the particles form it (still sitting on the ground), reached at progress `at`; the
   // camera then pulls back to `end` while the cards fly in and the ring turns
-  close: { dist: 6.5, height: 2.6, aim: 1.6, fov: 34, at: 0.45 },
+  close: { dist: 6.5, height: 2.6, aim: 1.6, fov: 34, at: 0.45, overlap: 0.3 },
   end: { dist: 9.5, height: 3.4, aim: 3.7, hfov: 84 }, // aim near the head: the ring sits under the copy, the feet and their shadow stay in frame
   dissolveA: [0.03, 0.24], // landing breaks up
   show: [0.03, 0.14, 0.36, 0.48], // particles fade in, then out
@@ -328,8 +328,11 @@ export async function createLandingScene(
   function apply() {
     const S = SHOWCASE
     const startDist = 26 * Math.max(1, 1.2 / camera.aspect) // narrow screens pull back so the hill still fills the width
-    const t1 = THREE.MathUtils.smootherstep(progress, 0, S.close.at),
-      t2 = THREE.MathUtils.smootherstep(progress, S.close.at, 1)
+    // One continuous move: the turn runs over the whole transition, and the pull-back starts before the approach has
+    // finished (the two overlap by S.close.overlap), so the camera sweeps past the close-up without stopping
+    const turn = THREE.MathUtils.smootherstep(progress, 0, 1),
+      t1 = THREE.MathUtils.smootherstep(progress, 0, S.close.at + S.close.overlap / 2),
+      t2 = THREE.MathUtils.smootherstep(progress, S.close.at - S.close.overlap / 2, 1)
     const endFov = THREE.MathUtils.radToDeg(
       2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(S.end.hfov / 2)) / camera.aspect),
     )
@@ -344,7 +347,7 @@ export async function createLandingScene(
         via(S.start.height, S.close.height, S.end.height),
         via(startDist, S.close.dist, S.end.dist),
       )
-      .applyAxisAngle(THREE.Object3D.DEFAULT_UP, t1 * S.turn)
+      .applyAxisAngle(THREE.Object3D.DEFAULT_UP, turn * S.turn)
     camera.position.copy(seat).add(offset)
     camera.lookAt(aim.copy(seat).setY(seat.y + via(S.start.aim, S.close.aim, S.end.aim)))
 
@@ -354,7 +357,8 @@ export async function createLandingScene(
     ring.meshes.forEach((m, k) => {
       const e = 1 - (1 - ss(progress, c0 + k * step, c0 + k * step + each)) ** 3
       const home = m.userData.home as THREE.Vector3
-      m.visible = e > 0
+      m.userData.flown = e > 0
+      m.visible = e > 0 && (m.material as THREE.ShaderMaterial).userData.ready === true
       m.position.copy(home).multiplyScalar(1 + S.fly.out * (1 - e))
       m.position.y = home.y + S.fly.up * (1 - e)
     })
@@ -432,7 +436,9 @@ export async function createLandingScene(
           if (progress > 0.99 && !hovered) ringRot += dt * RING.spin
           ring.group.rotation.y = ringRot + introSpin
           for (const m of ring.meshes) {
-            const u = (m.material as THREE.ShaderMaterial).uniforms.uHover
+            const mat = m.material as THREE.ShaderMaterial
+            m.visible = m.userData.flown && mat.userData.ready === true // a cover that loads late still shows up
+            const u = mat.uniforms.uHover
             u.value += ((m === hovered ? 1 : 0) - u.value) * Math.min(1, dt * 10)
           }
           composer.render()

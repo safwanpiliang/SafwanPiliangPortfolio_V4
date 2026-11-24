@@ -26,7 +26,8 @@ export function createRing(cards: RingCard[]) {
   const geo = new THREE.PlaneGeometry(w, h)
   const shown = cards.slice(0, RING.count)
   const meshes = shown.map((card, i) => {
-    const map = loader.load(card.cover)
+    // the card stays hidden until its cover is in, rather than showing as a black card
+    const map = loader.load(card.cover, () => (mat.userData.ready = true))
     map.colorSpace = THREE.SRGBColorSpace
     map.anisotropy = 4
     const mat = new THREE.ShaderMaterial({
