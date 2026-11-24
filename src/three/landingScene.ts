@@ -22,6 +22,8 @@ import { DAY, SEASON, styledMat, styleUniforms, type DissolveGroup } from './sty
 
 const MODEL = '/models/chibi-sitting.glb'
 const STAND = '/models/chibi-standup.glb' // Mixamo stand-up-from-the-ground on the same skeleton (animation only)
+const IDLE = '/models/chibi-warrior-idle.glb' // Mixamo Warrior Idle, looped once standing (animation only)
+const IDLE_FADE = 0.6 // s, blend from the end of the stand-up into the idle
 // Standing (bind pose) height in metres. Bigger than the Arumbae player (1.75) so it reads over the grass, as in the reference.
 const CHARACTER_HEIGHT = 4.2
 const SEAT = new THREE.Vector3(0, 0, 0.4)
@@ -156,7 +158,11 @@ export async function createLandingScene(
 
   // Character: plain white Chibi with its own colours, sitting idle on the hill top, facing the camera
   const loader = new GLTFLoader()
-  const [gltf, standUp] = await Promise.all([loader.loadAsync(MODEL), loader.loadAsync(STAND)])
+  const [gltf, standUp, idle] = await Promise.all([
+    loader.loadAsync(MODEL),
+    loader.loadAsync(STAND),
+    loader.loadAsync(IDLE),
+  ])
   /** Copy of the Chibi playing `clip`, scaled to CHARACTER_HEIGHT with its lowest point on the seat. */
   function character(clip: THREE.AnimationClip, group: DissolveGroup) {
     const model = group === 'a' ? gltf.scene : SkeletonUtils.clone(gltf.scene)
@@ -190,6 +196,13 @@ export async function createLandingScene(
   const standAction = standing.mixer.existingAction(standUp.animations[0])!
   standAction.setLoop(THREE.LoopOnce, 1).clampWhenFinished = true
   standAction.paused = true // held on its first frame until the showcase has formed
+  // once up, it blends into a looping idle so it doesn't freeze
+  const idleAction = standing.mixer.clipAction(idle.animations[0])
+  standing.mixer.addEventListener('finished', (e) => {
+    if (e.action !== standAction || still) return
+    idleAction.reset().play()
+    standAction.crossFadeTo(idleAction, IDLE_FADE, false)
+  })
   if (still) {
     standAction.time = standUp.animations[0].duration // reduced motion: shown already standing
     standing.mixer.update(0)
@@ -402,7 +415,8 @@ export async function createLandingScene(
           if (styleUniforms.uDissolveB.value < 0.05 && standAction.paused && standAction.time === 0)
             standAction.paused = false
           else if (!showcase.visible && standAction.time > 0) {
-            standAction.reset().paused = true
+            idleAction.stop()
+            standAction.reset().setEffectiveWeight(1).paused = true
             standing.mixer.update(0)
           }
           if (showcase.visible) standing.mixer.update(dt)
