@@ -21,7 +21,7 @@ import { DAY, SEASON, styledMat, styleUniforms, type DissolveGroup } from './sty
 // the same character standing, with a ring of project cards around it.
 
 const MODEL = '/models/chibi-sitting.glb'
-const IDLE = '/models/chibi-idle.glb' // Mixamo standing idle on the same skeleton (animation only)
+const STAND = '/models/chibi-standup.glb' // Mixamo stand-up-from-the-ground on the same skeleton (animation only)
 // Standing (bind pose) height in metres. Bigger than the Arumbae player (1.75) so it reads over the grass, as in the reference.
 const CHARACTER_HEIGHT = 4.2
 const SEAT = new THREE.Vector3(0, 0, 0.4)
@@ -80,67 +80,6 @@ function softMat(params: THREE.MeshLambertMaterialParameters, group: DissolveGro
   })
   mat.customProgramCacheKey = () => `style-soft-character-${group}`
   return mat
-}
-
-/**
- * Static showcase pose, a relaxed welcome: upper arms down and out from the body, elbows bent so the forearms come
- * forward, open hands palm up, chin slightly up. Directions are in the character's own space (+x = its left, +y = up,
- * +z = forward) for its left side and mirrored for the right; the legs and spine keep the idle clip's first frame.
- */
-const POSE = {
-  arm: [1, -0.85, 0.3],
-  forearm: [0.8, -0.25, 0.75],
-  hand: [0.6, 0.1, 0.8], // wrist bent back a little, so the open hand turns up
-  palmRoll: -1.5, // rad, roll of the forearm from palm-forward to palm-up (applied mirrored)
-  chinUp: 0.08, // rad
-}
-
-/** Puts the (already posed by the clip) skeleton of `model` into POSE, by turning bones in world space. */
-function strikePose(model: THREE.Object3D) {
-  const bone = (name: string) => model.getObjectByName(`mixamorig${name}`)!
-  const rot = new THREE.Quaternion(),
-    wq = new THREE.Quaternion(),
-    pq = new THREE.Quaternion(),
-    a = new THREE.Vector3(),
-    b = new THREE.Vector3()
-  model.updateMatrixWorld(true)
-  const modelQ = model.getWorldQuaternion(new THREE.Quaternion())
-  const turn = (o: THREE.Object3D, r: THREE.Quaternion) => {
-    o.getWorldQuaternion(wq)
-    o.parent!.getWorldQuaternion(pq)
-    o.quaternion.copy(pq.invert().multiply(r).multiply(wq))
-    o.updateMatrixWorld(true)
-  }
-  const along = (o: THREE.Object3D, child: THREE.Object3D) =>
-    child.getWorldPosition(b).sub(o.getWorldPosition(a)).normalize()
-  const aim = (o: THREE.Object3D, child: THREE.Object3D, dir: number[]) =>
-    turn(
-      o,
-      rot.setFromUnitVectors(
-        along(o, child),
-        new THREE.Vector3(...dir).normalize().applyQuaternion(modelQ),
-      ),
-    )
-  for (const [side, s] of [
-    ['Left', 1],
-    ['Right', -1],
-  ] as const) {
-    const m = (v: number[]) => [v[0] * s, v[1], v[2]]
-    aim(bone(`${side}Arm`), bone(`${side}ForeArm`), m(POSE.arm))
-    aim(bone(`${side}ForeArm`), bone(`${side}Hand`), m(POSE.forearm))
-    turn(
-      bone(`${side}ForeArm`),
-      rot.setFromAxisAngle(
-        along(bone(`${side}ForeArm`), bone(`${side}Hand`)).clone(),
-        POSE.palmRoll * s,
-      ),
-    )
-    aim(bone(`${side}Hand`), bone(`${side}HandIndex1`), m(POSE.hand))
-  }
-  turn(
-    bone('Head'),
-    rot.setFromAxisAngle(new THREE.Vector3(1, 0, 0).applyQuaternion(modelQ), -POSE.chinUp),
-  )
 }
 
 export type Season = 'summer' | 'autumn'
@@ -217,7 +156,7 @@ export async function createLandingScene(
 
   // Character: plain white Chibi with its own colours, sitting idle on the hill top, facing the camera
   const loader = new GLTFLoader()
-  const [gltf, idle] = await Promise.all([loader.loadAsync(MODEL), loader.loadAsync(IDLE)])
+  const [gltf, standUp] = await Promise.all([loader.loadAsync(MODEL), loader.loadAsync(STAND)])
   /** Copy of the Chibi playing `clip`, scaled to CHARACTER_HEIGHT with its lowest point on the seat. */
   function character(clip: THREE.AnimationClip, group: DissolveGroup) {
     const model = group === 'a' ? gltf.scene : SkeletonUtils.clone(gltf.scene)
@@ -246,9 +185,15 @@ export async function createLandingScene(
   }
   const sitting = character(gltf.animations[0], 'a')
   landing.add(sitting.model)
-  const standing = character(idle.animations[0], 'b')
+  const standing = character(standUp.animations[0], 'b') // forms sitting on the ground, then stands up once and stays
   standing.model.rotation.y = SHOWCASE.turn // faces the camera once it has come round
-  strikePose(standing.model) // held still: the idle clip only provides the stance
+  const standAction = standing.mixer.existingAction(standUp.animations[0])!
+  standAction.setLoop(THREE.LoopOnce, 1).clampWhenFinished = true
+  standAction.paused = true // held on its first frame until the showcase has formed
+  if (still) {
+    standAction.time = standUp.animations[0].duration // reduced motion: shown already standing
+    standing.mixer.update(0)
+  }
   standing.model.updateMatrixWorld(true)
   showcase.add(standing.model)
   // Soft contact shadow under the standing character (the showcase has no ground to catch the sun's shadow)
@@ -453,6 +398,14 @@ export async function createLandingScene(
           const autumn = styleUniforms.uAutumn
           const step = dt / SEASON.duration
           autumn.value += THREE.MathUtils.clamp(seasonTarget - autumn.value, -step, step)
+          // the character stands up once the showcase has formed; going back to the landing re-arms it
+          if (styleUniforms.uDissolveB.value < 0.05 && standAction.paused && standAction.time === 0)
+            standAction.paused = false
+          else if (!showcase.visible && standAction.time > 0) {
+            standAction.reset().paused = true
+            standing.mixer.update(0)
+          }
+          if (showcase.visible) standing.mixer.update(dt)
           // the ring idles round once it has formed, and holds still under the pointer
           if (progress > 0.99 && !hovered) ringRot += dt * RING.spin
           ring.group.rotation.y = morph.uniforms.uRingRot.value = ringRot
