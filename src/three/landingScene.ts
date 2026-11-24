@@ -19,15 +19,12 @@ import { DAY, SEASON, styledMat, styleUniforms, type DissolveGroup } from './sty
 // Scrolling turns the camera around the character while the hill breaks into particles that re-form as section 2:
 // the same character standing, with a ring of project cards around it.
 
-// The character, rigged on the Mixamo Chibi skeleton: it sits on the hill (the model's own clip), then stands up and
-// idles in the showcase. A static model without animations also works: it just stands in both sections.
-// The Chibi itself: '/models/chibi-sitting.glb' with CHARACTER_HEIGHT 4.2.
-const MODEL = '/models/cat-rigged.glb' // the cat: the Chibi's body with a cat head, on the Chibi's skeleton and skin weights
+const MODEL = '/models/chibi-sitting.glb'
 const STAND = '/models/chibi-standup.glb' // Mixamo stand-up-from-the-ground on the same skeleton (animation only)
 const IDLE = '/models/chibi-warrior-idle.glb' // Mixamo Warrior Idle, looped once standing (animation only)
 const IDLE_FADE = 0.6 // s, blend from the end of the stand-up into the idle
-// Height in metres (a rigged model: standing bind pose). Bigger than the Arumbae player (1.75) so it reads over the grass.
-const CHARACTER_HEIGHT = 3.93 // 4.2 for the Chibi; the cat's head is lower (1.216 vs 1.299 in the bind pose), same body scale
+// Standing (bind pose) height in metres. Bigger than the Arumbae player (1.75) so it reads over the grass, as in the reference.
+const CHARACTER_HEIGHT = 4.2
 const SEAT = new THREE.Vector3(0, 0, 0.4)
 // Trees near the left and right edges (a nutmeg on the left, a leafy tree on the right) (off to the side so they don't cover the copy); a bush and rocks in front of the hill
 const PROPS = {
@@ -79,14 +76,7 @@ const PAL = {
   character: '#f2f1ee',
 }
 
-// Gloss on the character, like the Principled BSDF (roughness 0.5) it has in Blender: a soft studio reflection, brighter
-// from above and towards the silhouette, and a sun highlight. Without it a dark fur reads as flat black.
-const GLOSS = { env: [0.03, 0.16], fresnel: 0.65, spec: 0.35, shininess: 24 }
-
-/**
- * Character material with softer shadows than the rest (Arumbae softMat): shadow colour pulled towards white, wider
- * falloff; plus GLOSS.
- */
+/** Character material with softer shadows than the rest (Arumbae softMat): shadow colour pulled towards white, wider falloff. */
 function softMat(params: THREE.MeshLambertMaterialParameters, group: DissolveGroup) {
   const mat = styledMat({ ...params, userData: { group } }, (s) => {
     const lit = 'float lit = smoothstep(uShade.x, uShade.y,',
@@ -96,21 +86,6 @@ function softMat(params: THREE.MeshLambertMaterialParameters, group: DissolveGro
     s.fragmentShader = s.fragmentShader
       .replace(lit, 'float lit = smoothstep(uShade.x - 0.25, uShade.y + 0.40,')
       .replace(shade, 'outgoingLight = mix(base * mix(uShadowColor, vec3(1.0), 0.60),')
-      .replace(
-        '#include <opaque_fragment>',
-        /* glsl */ `{
-          vec3 V = normalize(vViewPosition), N = normalize(normal);
-          vec3 L = normalize((viewMatrix * vec4(uSunDir, 0.0)).xyz), H = normalize(L + V);
-          float up = normalize((vec4(N, 0.0) * viewMatrix).xyz).y;   // world-space normal, from the view-space one
-          float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
-          vec3 env = mix(vec3(${GLOSS.env[0]}), vec3(${GLOSS.env[1]}), smoothstep(-0.4, 0.9, up));
-          env *= ${(1 - GLOSS.fresnel).toFixed(2)} + ${GLOSS.fresnel.toFixed(2)} * fres;
-          float spec = pow(max(dot(N, H), 0.0), ${GLOSS.shininess.toFixed(1)}) * ${GLOSS.spec.toFixed(2)} * lit;
-          outgoingLight += (env + spec * uLightColor) * (1.0 - dsRim);
-        }
-        #include <opaque_fragment>`,
-      )
-    s.fragmentShader = 'uniform vec3 uSunDir;\n' + s.fragmentShader
   })
   mat.customProgramCacheKey = () => `style-soft-character-${group}`
   return mat
@@ -186,15 +161,15 @@ export async function createLandingScene(
       }),
     )
 
-  // Character: the model's own colours, on the hill top facing the camera
+  // Character: plain white Chibi with its own colours, sitting idle on the hill top, facing the camera
   const loader = new GLTFLoader()
-  const gltf = await loader.loadAsync(MODEL)
-  const rigged = gltf.animations.length > 0
-  const [standUp, idle] = rigged
-    ? await Promise.all([loader.loadAsync(STAND), loader.loadAsync(IDLE)])
-    : []
-  /** Copy of the model (playing `clip` if rigged), scaled to CHARACTER_HEIGHT with its lowest point on the seat. */
-  function character(clip: THREE.AnimationClip | undefined, group: DissolveGroup) {
+  const [gltf, standUp, idle] = await Promise.all([
+    loader.loadAsync(MODEL),
+    loader.loadAsync(STAND),
+    loader.loadAsync(IDLE),
+  ])
+  /** Copy of the Chibi playing `clip`, scaled to CHARACTER_HEIGHT with its lowest point on the seat. */
+  function character(clip: THREE.AnimationClip, group: DissolveGroup) {
     const model = group === 'a' ? gltf.scene : SkeletonUtils.clone(gltf.scene)
     const meshes: THREE.SkinnedMesh[] = []
     model.traverse((o) => {
@@ -211,7 +186,7 @@ export async function createLandingScene(
     const bind = new THREE.Box3().setFromObject(model) // bind pose (standing) bounds
     model.scale.setScalar(CHARACTER_HEIGHT / (bind.max.y - bind.min.y))
     const mixer = new THREE.AnimationMixer(model)
-    if (clip) mixer.clipAction(clip).play()
+    mixer.clipAction(clip).play()
     mixer.update(0)
     model.updateMatrixWorld(true)
     const posed = new THREE.Box3().setFromObject(model, true) // posed bounds: rest the lowest point on the ground
@@ -221,24 +196,21 @@ export async function createLandingScene(
   }
   const sitting = character(gltf.animations[0], 'a')
   landing.add(sitting.model)
-  const standClip = standUp?.animations[0]
-  const standing = character(standClip, 'b') // rigged: forms sitting on the ground, then stands up once and stays
+  const standing = character(standUp.animations[0], 'b') // forms sitting on the ground, then stands up once and stays
   standing.model.rotation.y = SHOWCASE.turn // faces the camera once it has come round
-  const standAction = standClip && standing.mixer.existingAction(standClip)!
-  const idleAction = idle && standing.mixer.clipAction(idle.animations[0])
-  if (standClip && standAction && idleAction) {
-    standAction.setLoop(THREE.LoopOnce, 1).clampWhenFinished = true
-    standAction.paused = true // held on its first frame until the showcase has formed
-    // once up, it blends into a looping idle so it doesn't freeze
-    standing.mixer.addEventListener('finished', (e) => {
-      if (e.action !== standAction || still) return
-      idleAction.reset().play()
-      standAction.crossFadeTo(idleAction, IDLE_FADE, false)
-    })
-    if (still) {
-      standAction.time = standClip.duration // reduced motion: shown already standing
-      standing.mixer.update(0)
-    }
+  const standAction = standing.mixer.existingAction(standUp.animations[0])!
+  standAction.setLoop(THREE.LoopOnce, 1).clampWhenFinished = true
+  standAction.paused = true // held on its first frame until the showcase has formed
+  // once up, it blends into a looping idle so it doesn't freeze
+  const idleAction = standing.mixer.clipAction(idle.animations[0])
+  standing.mixer.addEventListener('finished', (e) => {
+    if (e.action !== standAction || still) return
+    idleAction.reset().play()
+    standAction.crossFadeTo(idleAction, IDLE_FADE, false)
+  })
+  if (still) {
+    standAction.time = standUp.animations[0].duration // reduced motion: shown already standing
+    standing.mixer.update(0)
   }
   standing.model.updateMatrixWorld(true)
   showcase.add(standing.model)
@@ -272,25 +244,20 @@ export async function createLandingScene(
   showcase.add(blob)
   // The shadow follows the feet as the character stands up and idles (the clip moves them off the seat): it tracks the
   // toe bones, less `sole`, the height of the toe bones above the bottom of the feet, measured in the final pose
-  // (a static model just keeps it under its seat)
-  const toes = rigged
-    ? ['Left', 'Right'].map((side) => standing.model.getObjectByName(`mixamorig${side}ToeBase`)!)
-    : []
+  const toes = ['Left', 'Right'].map(
+    (side) => standing.model.getObjectByName(`mixamorig${side}ToeBase`)!,
+  )
   const toeA = new THREE.Vector3(),
     toeB = new THREE.Vector3()
-  let sole = 0
-  if (standClip && standAction) {
-    const keepTime = standAction.time
-    standAction.time = standClip.duration
-    standing.mixer.update(0)
-    standing.model.updateMatrixWorld(true)
-    sole =
-      toes[0].getWorldPosition(toeA).y - new THREE.Box3().setFromObject(standing.model, true).min.y
-    standAction.time = keepTime
-    standing.mixer.update(0)
-  }
+  const keepTime = standAction.time
+  standAction.time = standUp.animations[0].duration
+  standing.mixer.update(0)
+  standing.model.updateMatrixWorld(true)
+  const sole =
+    toes[0].getWorldPosition(toeA).y - new THREE.Box3().setFromObject(standing.model, true).min.y
+  standAction.time = keepTime
+  standing.mixer.update(0)
   function placeShadow() {
-    if (!toes.length) return
     standing.model.updateMatrixWorld(true)
     toes[0].getWorldPosition(toeA)
     toes[1].getWorldPosition(toeB)
@@ -477,19 +444,13 @@ export async function createLandingScene(
           const autumn = styleUniforms.uAutumn
           const step = dt / SEASON.duration
           autumn.value += THREE.MathUtils.clamp(seasonTarget - autumn.value, -step, step)
-          // a rigged character stands up once the showcase has formed; going back to the landing re-arms it
-          if (standAction && idleAction) {
-            if (
-              styleUniforms.uDissolveB.value < 0.05 &&
-              standAction.paused &&
-              standAction.time === 0
-            )
-              standAction.paused = false
-            else if (!showcase.visible && standAction.time > 0) {
-              idleAction.stop()
-              standAction.reset().setEffectiveWeight(1).paused = true
-              standing.mixer.update(0)
-            }
+          // the character stands up once the showcase has formed; going back to the landing re-arms it
+          if (styleUniforms.uDissolveB.value < 0.05 && standAction.paused && standAction.time === 0)
+            standAction.paused = false
+          else if (!showcase.visible && standAction.time > 0) {
+            idleAction.stop()
+            standAction.reset().setEffectiveWeight(1).paused = true
+            standing.mixer.update(0)
           }
           if (showcase.visible) {
             standing.mixer.update(dt)
