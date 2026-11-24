@@ -103,7 +103,7 @@ export type LandingScene = {
   setProgress: (p: number) => void
   /** Sweep the season over the trees, bushes, grass and ground as a wave from the character (instant for reduced motion). */
   setSeason: (season: Season) => void
-  /** Card under the pointer (normalised device coords), highlighted; undefined off the cards or before the ring is formed. */
+  /** Card under the pointer (normalised device coords), for clicks; undefined off the cards or before the ring is formed. */
   pick: (x: number, y: number) => RingCard | undefined
   /** Reduced motion: a still image of the finished showcase (the canvas keeps showing the landing). */
   snapshot: () => string
@@ -431,7 +431,6 @@ export async function createLandingScene(
 
   const raycaster = new THREE.Raycaster(),
     ndc = new THREE.Vector2()
-  let hovered: THREE.Mesh | undefined
   const formed = () => progress > 0.98 // cards in place
 
   const timer = new THREE.Timer()
@@ -463,14 +462,12 @@ export async function createLandingScene(
             standing.mixer.update(dt)
             placeShadow()
           }
-          // the ring idles round once it has formed, and holds still under the pointer
-          if (progress > 0.99 && !hovered) ringRot += dt * RING.spin
+          // the ring idles round once it has formed, pointer or not
+          if (progress > 0.99) ringRot += dt * RING.spin
           ring.group.rotation.y = ringRot + introSpin
           for (const m of ring.meshes) {
             const mat = m.material as THREE.ShaderMaterial
             m.visible = m.userData.flown && mat.userData.ready === true // a cover that loads late still shows up
-            const u = mat.uniforms.uHover
-            u.value += ((m === hovered ? 1 : 0) - u.value) * Math.min(1, dt * 10)
           }
           composer.render()
         },
@@ -486,7 +483,6 @@ export async function createLandingScene(
     setProgress(p) {
       progress = THREE.MathUtils.clamp(p, 0, 1)
       apply()
-      if (!formed()) hovered = undefined
     },
     setSeason(season) {
       seasonTarget = season === 'autumn' ? 1 : 0
@@ -496,10 +492,9 @@ export async function createLandingScene(
       }
     },
     pick(x, y) {
-      if (!formed()) return (hovered = undefined)
+      if (!formed()) return undefined
       raycaster.setFromCamera(ndc.set(x, y), camera)
-      hovered = raycaster.intersectObjects(ring.meshes, false)[0]?.object as THREE.Mesh | undefined
-      return hovered?.userData.card
+      return raycaster.intersectObjects(ring.meshes, false)[0]?.object.userData.card
     },
     snapshot() {
       const keep = progress

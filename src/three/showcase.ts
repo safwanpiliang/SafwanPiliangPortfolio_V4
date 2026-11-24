@@ -34,7 +34,6 @@ export function createRing(cards: RingCard[]) {
       uniforms: {
         map: { value: map },
         uImageAspect: { value: 1.25 }, // updated once the image is in
-        uHover: { value: 0 },
         uDissolveB: { value: 0 }, // cards fly in rather than dissolve
       },
       vertexShader: /* glsl */ `
@@ -46,7 +45,7 @@ export function createRing(cards: RingCard[]) {
           gl_Position = projectionMatrix * viewMatrix * w;
         }`,
       fragmentShader: /* glsl */ `
-        uniform sampler2D map; uniform float uImageAspect, uHover, uDissolveB;
+        uniform sampler2D map; uniform float uImageAspect, uDissolveB;
         varying vec2 vUv; varying vec3 vWorld;
         ${DISSOLVE_GLSL}
         void main() {
@@ -61,7 +60,7 @@ export function createRing(cards: RingCard[]) {
           float ca = ${(w / h).toFixed(4)};
           vec2 uv = vUv - 0.5;
           if (uImageAspect > ca) uv.x *= ca / uImageAspect; else uv.y *= uImageAspect / ca;
-          vec3 c = texture2D(map, uv * (1.0 - uHover * 0.06) + 0.5).rgb * 0.97;   // under the bloom threshold
+          vec3 c = texture2D(map, uv + 0.5).rgb * 0.97;   // under the bloom threshold
           c = mix(c, vec3(1.6, 1.45, 1.25), rim);
           gl_FragColor = vec4(c * a, a);
           #include <colorspace_fragment>
