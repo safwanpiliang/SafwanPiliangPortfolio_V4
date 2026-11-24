@@ -32,7 +32,7 @@ export function Footer() {
                 <span className="text-paper">05</span> — Contact
               </span>
               <h2 className="mt-5 max-w-[920px] text-[clamp(2.25rem,5.2vw,5.5rem)] leading-[0.98] font-medium tracking-[-0.05em] md:mt-7">
-                Looking for a UI/UX intern? <span className="text-paper/40">My inbox is open.</span>
+                Have a product in mind? <span className="text-paper/40">My inbox is open.</span>
               </h2>
 
               <div className="mt-8 flex flex-col gap-3.5 sm:flex-row sm:items-center md:mt-10 lg:mt-12">
@@ -69,7 +69,7 @@ export function Footer() {
               </div>
 
               <div className="mt-10 flex flex-col gap-2 border-t border-paper/15 pt-5 text-[13px] text-paper/50 sm:flex-row sm:justify-between md:mt-12 lg:mt-16">
-                <span>Open to UI/UX &amp; design internships, January–July</span>
+                <span>Open to UI/UX &amp; product design work</span>
                 <span>Freelance projects &amp; collaborations welcome</span>
               </div>
             </div>
