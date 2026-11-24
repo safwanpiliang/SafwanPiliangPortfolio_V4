@@ -34,7 +34,7 @@ export function createRing(cards: RingCard[]) {
         map: { value: map },
         uImageAspect: { value: 1.25 }, // updated once the image is in
         uHover: { value: 0 },
-        uDissolveB: styleUniforms.uDissolveB,
+        uDissolveB: { value: 0 }, // cards fly in rather than dissolve
       },
       vertexShader: /* glsl */ `
         varying vec2 vUv; varying vec3 vWorld;
@@ -116,38 +116,6 @@ export function sampleMesh(mesh: THREE.Mesh, n: number, rand: () => number, out:
     tmp.applyMatrix4(mesh.matrixWorld)
     out.push(tmp.x, tmp.y, tmp.z)
   }
-}
-
-/** Small RGB grid of an image, to colour the particles that become a card. */
-export function imagePixels(src: string, cols = 12, rows = 16): Promise<Uint8ClampedArray> {
-  return new Promise((resolve) => {
-    const img = new Image()
-    img.onload = () => {
-      const cv = document.createElement('canvas')
-      cv.width = cols
-      cv.height = rows
-      const ctx = cv.getContext('2d')!
-      // same centre crop as the card
-      const ca = RING.size[0] / RING.size[1],
-        ia = img.naturalWidth / img.naturalHeight
-      const sw = ia > ca ? img.naturalHeight * ca : img.naturalWidth,
-        sh = ia > ca ? img.naturalHeight : img.naturalWidth / ca
-      ctx.drawImage(
-        img,
-        (img.naturalWidth - sw) / 2,
-        (img.naturalHeight - sh) / 2,
-        sw,
-        sh,
-        0,
-        0,
-        cols,
-        rows,
-      )
-      resolve(ctx.getImageData(0, 0, cols, rows).data)
-    }
-    img.onerror = () => resolve(new Uint8ClampedArray(cols * rows * 4).fill(200))
-    img.src = src
-  })
 }
 
 export type PointSet = {

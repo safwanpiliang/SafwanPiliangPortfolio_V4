@@ -7,7 +7,7 @@ import { ScrambleWords } from '../effects/ScrambleWords'
 import type { LandingScene, RingCard, Season } from '../../three/landingScene'
 
 const ease = [0.22, 1, 0.36, 1] as const
-const TRANSITION_MS = 2400 // landing → showcase, played in one go
+const TRANSITION_MS = 3500 // landing → showcase, played in one go
 const smooth = (a: number, b: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
   return t * t * (3 - 2 * t)
@@ -113,7 +113,7 @@ export function Landing({ ready }: { ready: boolean }) {
     const apply = (v: number) => {
       sceneRef.current?.setProgress(v)
       const out = 1 - smooth(0.02, 0.2, v),
-        inn = smooth(0.72, 0.92, v)
+        inn = smooth(0.84, 0.98, v)
       for (const el of [copyRef.current, toggleRef.current])
         if (el) {
           el.style.opacity = String(out)

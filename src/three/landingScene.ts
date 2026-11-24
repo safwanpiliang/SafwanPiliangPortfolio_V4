@@ -8,7 +8,6 @@ import { createProps } from './props'
 import {
   createMorphPoints,
   createRing,
-  imagePixels,
   RING,
   sampleMesh,
   type PointSet,
@@ -49,11 +48,17 @@ const PROPS = {
 const SHOWCASE = {
   turn: Math.PI,
   start: { height: 5.0, aim: 3.6 }, // camera height and aim height above the seat
+  // close-up on the character as the particles form it (still sitting on the ground), reached at progress `at`; the
+  // camera then pulls back to `end` while the cards fly in and the ring turns
+  close: { dist: 6.5, height: 2.6, aim: 1.6, fov: 34, at: 0.45 },
   end: { dist: 9.5, height: 3.4, aim: 3.7, hfov: 84 }, // aim near the head: the ring sits under the copy, the feet and their shadow stay in frame
-  dissolveA: [0.04, 0.3], // landing breaks up
-  show: [0.04, 0.2, 0.62, 0.82], // particles fade in, then out
-  morph: [0.2, 0.68], // particles travel from landing to showcase
-  dissolveB: [0.52, 0.8], // showcase forms
+  dissolveA: [0.03, 0.24], // landing breaks up
+  show: [0.03, 0.14, 0.36, 0.48], // particles fade in, then out
+  morph: [0.12, 0.4], // particles travel from the landing onto the character
+  dissolveB: [0.34, 0.46], // the character forms
+  cards: [0.5, 0.94, 0.26], // cards fly in one after another over this range; each takes the last value
+  fly: { out: 2.5, up: 3 }, // where a card starts: this many ring radii further out, and this high above (m)
+  spin: Math.PI, // extra half turn of the ring during the pull-back, slowing to a stop
   points: { count: 16000, lite: 6500, size: 0.075 },
 }
 // sRGB palettes for landing particles: summer / autumn (they follow the season toggle)
@@ -244,6 +249,7 @@ export async function createLandingScene(
     .multiplyScalar(RING.offset)
     .add(seat)
   ring.group.updateMatrixWorld(true)
+  for (const m of ring.meshes) m.userData.home = m.position.clone()
   showcase.add(ring.group)
 
   // Particles: sample the landing surfaces (a) and the showcase (b)
@@ -303,26 +309,11 @@ export async function createLandingScene(
     () => pick(PAL.hill[1]),
   )
 
-  const b: PointSet = { pos: [], col: [], ring: [] }
-  const standPts: number[] = []
+  // the particles all gather on the character; the cards fly in afterwards
+  const b: PointSet = { pos: [], col: [] }
   for (const m of standing.meshes)
-    sampleMesh(m, Math.round((N * 0.2) / standing.meshes.length), rand, standPts)
-  b.pos.push(...standPts)
-  for (let i = 0; i < standPts.length / 3; i++) (b.col.push(...hex(PAL.character)), b.ring!.push(0))
-  const pixels = await Promise.all(ring.meshes.map((m) => imagePixels(m.userData.card.cover)))
-  const per = Math.round((N * 0.82) / Math.max(1, ring.meshes.length)),
-    v = new THREE.Vector3()
-  ring.meshes.forEach((m, k) => {
-    for (let i = 0; i < per; i++) {
-      const u = rand(),
-        w = rand()
-      v.set((u - 0.5) * RING.size[0], (w - 0.5) * RING.size[1], 0).applyMatrix4(m.matrixWorld)
-      b.pos.push(v.x, v.y, v.z)
-      const o = (Math.min(15, Math.floor((1 - w) * 16)) * 12 + Math.min(11, Math.floor(u * 12))) * 4
-      b.col.push(pixels[k][o] / 255, pixels[k][o + 1] / 255, pixels[k][o + 2] / 255)
-      b.ring!.push(1)
-    }
-  })
+    sampleMesh(m, Math.round(N / standing.meshes.length), rand, b.pos)
+  for (let i = 0; i < b.pos.length / 3; i++) b.col.push(...hex(PAL.character))
   const morph = createMorphPoints(a, b, ring.group.position, rand)
   scene.add(morph.points)
 
@@ -332,26 +323,43 @@ export async function createLandingScene(
     offset = new THREE.Vector3()
   const ss = THREE.MathUtils.smoothstep
   let progress = 0
-  let ringRot = 0
+  let ringRot = 0,
+    introSpin = 0
   function apply() {
     const S = SHOWCASE
     const startDist = 26 * Math.max(1, 1.2 / camera.aspect) // narrow screens pull back so the hill still fills the width
-    const t = THREE.MathUtils.smootherstep(progress, 0, 0.9),
-      tin = THREE.MathUtils.smootherstep(progress, 0.05, 0.9)
+    const t1 = THREE.MathUtils.smootherstep(progress, 0, S.close.at),
+      t2 = THREE.MathUtils.smootherstep(progress, S.close.at, 1)
     const endFov = THREE.MathUtils.radToDeg(
       2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(S.end.hfov / 2)) / camera.aspect),
     )
-    camera.fov = THREE.MathUtils.lerp(26, THREE.MathUtils.clamp(endFov, 30, 72), tin)
+    // landing → close-up → end
+    const via = (a: number, b: number, c: number) =>
+      THREE.MathUtils.lerp(THREE.MathUtils.lerp(a, b, t1), c, t2)
+    camera.fov = via(26, S.close.fov, THREE.MathUtils.clamp(endFov, 30, 72))
     camera.updateProjectionMatrix()
     offset
       .set(
         0,
-        THREE.MathUtils.lerp(S.start.height, S.end.height, tin),
-        THREE.MathUtils.lerp(startDist, S.end.dist, tin),
+        via(S.start.height, S.close.height, S.end.height),
+        via(startDist, S.close.dist, S.end.dist),
       )
-      .applyAxisAngle(THREE.Object3D.DEFAULT_UP, t * S.turn)
+      .applyAxisAngle(THREE.Object3D.DEFAULT_UP, t1 * S.turn)
     camera.position.copy(seat).add(offset)
-    camera.lookAt(aim.copy(seat).setY(seat.y + THREE.MathUtils.lerp(S.start.aim, S.end.aim, tin)))
+    camera.lookAt(aim.copy(seat).setY(seat.y + via(S.start.aim, S.close.aim, S.end.aim)))
+
+    // cards fly in from further out and above, one after another, while the ring turns its extra half turn
+    const [c0, c1, each] = S.cards,
+      step = (c1 - c0 - each) / Math.max(1, ring.meshes.length - 1)
+    ring.meshes.forEach((m, k) => {
+      const e = 1 - (1 - ss(progress, c0 + k * step, c0 + k * step + each)) ** 3
+      const home = m.userData.home as THREE.Vector3
+      m.visible = e > 0
+      m.position.copy(home).multiplyScalar(1 + S.fly.out * (1 - e))
+      m.position.y = home.y + S.fly.up * (1 - e)
+    })
+    introSpin = S.spin * (1 - t2) ** 3
+    ring.group.rotation.y = ringRot + introSpin
 
     const dA = ss(progress, S.dissolveA[0], S.dissolveA[1]),
       dB = 1 - ss(progress, S.dissolveB[0], S.dissolveB[1]),
@@ -392,7 +400,7 @@ export async function createLandingScene(
   const raycaster = new THREE.Raycaster(),
     ndc = new THREE.Vector2()
   let hovered: THREE.Mesh | undefined
-  const formed = () => showcase.visible && styleUniforms.uDissolveB.value < 0.2
+  const formed = () => progress > 0.98 // cards in place
 
   const timer = new THREE.Timer()
   let active = true
@@ -422,7 +430,7 @@ export async function createLandingScene(
           if (showcase.visible) standing.mixer.update(dt)
           // the ring idles round once it has formed, and holds still under the pointer
           if (progress > 0.99 && !hovered) ringRot += dt * RING.spin
-          ring.group.rotation.y = morph.uniforms.uRingRot.value = ringRot
+          ring.group.rotation.y = ringRot + introSpin
           for (const m of ring.meshes) {
             const u = (m.material as THREE.ShaderMaterial).uniforms.uHover
             u.value += ((m === hovered ? 1 : 0) - u.value) * Math.min(1, dt * 10)
