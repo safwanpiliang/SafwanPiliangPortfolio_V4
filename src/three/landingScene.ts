@@ -19,14 +19,15 @@ import { DAY, SEASON, styledMat, styleUniforms, type DissolveGroup } from './sty
 // Scrolling turns the camera around the character while the hill breaks into particles that re-form as section 2:
 // the same character standing, with a ring of project cards around it.
 
-// The character. A static model (the cat) stands as it is in both sections; a rigged Mixamo one (the Chibi,
-// '/models/chibi-sitting.glb' with CHARACTER_HEIGHT 4.2) sits on the hill and stands up / idles in the showcase.
-const MODEL = '/models/cat.glb'
+// The character, rigged on the Mixamo Chibi skeleton: it sits on the hill (the model's own clip), then stands up and
+// idles in the showcase. A static model without animations also works: it just stands in both sections.
+// The Chibi itself: '/models/chibi-sitting.glb' with CHARACTER_HEIGHT 4.2.
+const MODEL = '/models/cat-rigged.glb' // the cat: the Chibi's body with a cat head, on the Chibi's skeleton and skin weights
 const STAND = '/models/chibi-standup.glb' // Mixamo stand-up-from-the-ground on the same skeleton (animation only)
 const IDLE = '/models/chibi-warrior-idle.glb' // Mixamo Warrior Idle, looped once standing (animation only)
 const IDLE_FADE = 0.6 // s, blend from the end of the stand-up into the idle
 // Height in metres (a rigged model: standing bind pose). Bigger than the Arumbae player (1.75) so it reads over the grass.
-const CHARACTER_HEIGHT = 3.2
+const CHARACTER_HEIGHT = 3.93 // 4.2 for the Chibi; the cat's head is lower (1.216 vs 1.299 in the bind pose), same body scale
 const SEAT = new THREE.Vector3(0, 0, 0.4)
 // Trees near the left and right edges (a nutmeg on the left, a leafy tree on the right) (off to the side so they don't cover the copy); a bush and rocks in front of the hill
 const PROPS = {
