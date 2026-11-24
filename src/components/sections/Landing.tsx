@@ -262,7 +262,7 @@ export function Landing({ ready }: { ready: boolean }) {
           {...show(0)}
           className="rounded-full bg-soft px-3 py-1 text-[9.5px] font-medium tracking-[0.08em] whitespace-nowrap text-mute uppercase sm:px-4 sm:py-1.5 sm:text-[12px] sm:tracking-[0.14em]"
         >
-          Product &amp; Brand Designer — Yogyakarta-Jakarta, ID
+          UI/UX &amp; Product Designer — Yogyakarta-Jakarta, ID
         </motion.span>
         <motion.h1
           {...show(0.1)}
